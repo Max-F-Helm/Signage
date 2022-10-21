@@ -8,3 +8,5 @@
 /.idea/httpRequests/
 /.idea/dataSources/
 /.idea/dataSources.local.xml
+/node_modules/
+/dist/
