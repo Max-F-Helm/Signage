@@ -7,48 +7,49 @@ const CIPHER_NONCE = new Uint8Array([99, 77, 64, 37, 14, 67, 40, 69, 42, 62, 94,
 
 export interface Keypair {
     publicKey: Uint8Array,
-    privateKey: Uint8Array
+    privateKey: Uint8Array | null
 }
 
-export async function gen_ecc_keypair(): Promise<Keypair> {
-    await libsodium.ready;
-    const keypair = libsodium.crypto_sign_keypair();
-    return {
-        publicKey: keypair.publicKey,
-        privateKey: keypair.privateKey
-    };
-}
+export default class Bill {
 
-export async function sign_data(data: Uint8Array, keypair: Keypair): Promise<Uint8Array> {
-    await libsodium.ready;
-    return libsodium.crypto_sign_detached(data, keypair.privateKey);
-}
+    static async wait_for_init(): Promise<null> {
+        await libsodium.ready;
+        return null;
+    }
 
-export async function verify_data(data: Uint8Array, signature: Uint8Array, keypair: Keypair): Promise<boolean> {
-    await libsodium.ready;
-    return libsodium.crypto_sign_verify_detached(signature, data, keypair.publicKey);
-}
+    static async gen_ecc_keypair(): Promise<Keypair> {
+        const keypair = libsodium.crypto_sign_keypair();
+        return {
+            publicKey: keypair.publicKey,
+            privateKey: keypair.privateKey
+        };
+    }
 
-export async function hash(data: Uint8Array): Promise<Uint8Array> {
-    await libsodium.ready;
-    return libsodium.crypto_generichash(32, data);
-}
+    static async sign_data(data: Uint8Array, keypair: Keypair): Promise<Uint8Array> {
+        return libsodium.crypto_sign_detached(data, keypair.privateKey);
+    }
 
-export async function digest_pwd(pwd: string): Promise<Uint8Array> {
-    await libsodium.ready;
-    const keyLength = libsodium.crypto_secretbox_KEYBYTES;
-    const iterations = libsodium.crypto_pwhash_OPSLIMIT_MODERATE;
-    const memLimit = libsodium.crypto_pwhash_MEMLIMIT_MIN;
-    const pwdData = libsodium.from_string(pwd);
-    return libsodium.crypto_pwhash(keyLength, pwdData, KDF_SALT, iterations, memLimit, libsodium.crypto_pwhash_ALG_ARGON2ID13);
-}
+    static async verify_data(data: Uint8Array, signature: Uint8Array, keypair: Keypair): Promise<boolean> {
+        return libsodium.crypto_sign_verify_detached(signature, data, keypair.publicKey);
+    }
 
-export async function encrypt(data: Uint8Array, key: Uint8Array): Promise<Uint8Array> {
-    await libsodium.ready;
-    return libsodium.crypto_secretbox_easy(data, CIPHER_NONCE, key);
-}
+    static async hash(data: Uint8Array): Promise<Uint8Array> {
+        return libsodium.crypto_generichash(32, data);
+    }
 
-export async function decrypt(data: Uint8Array, key: Uint8Array): Promise<Uint8Array> {
-    await libsodium.ready;
-    return libsodium.crypto_secretbox_open_easy(data, CIPHER_NONCE, key);
+    static async digest_pwd(pwd: string): Promise<Uint8Array> {
+        const keyLength = libsodium.crypto_secretbox_KEYBYTES;
+        const iterations = libsodium.crypto_pwhash_OPSLIMIT_MODERATE;
+        const memLimit = libsodium.crypto_pwhash_MEMLIMIT_MIN;
+        const pwdData = libsodium.from_string(pwd);
+        return libsodium.crypto_pwhash(keyLength, pwdData, KDF_SALT, iterations, memLimit, libsodium.crypto_pwhash_ALG_ARGON2ID13);
+    }
+
+    static async encrypt(data: Uint8Array, key: Uint8Array): Promise<Uint8Array> {
+        return libsodium.crypto_secretbox_easy(data, CIPHER_NONCE, key);
+    }
+
+    static async decrypt(data: Uint8Array, key: Uint8Array): Promise<Uint8Array> {
+        return libsodium.crypto_secretbox_open_easy(data, CIPHER_NONCE, key);
+    }
 }
