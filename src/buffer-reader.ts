@@ -1,4 +1,5 @@
 import {Buffer} from "buffer";
+import {IllegalArgumentException} from "./exceptions";
 
 export default class BufferReader {
 
@@ -26,18 +27,8 @@ export default class BufferReader {
         this.pos += offset;
     }
 
-    readUIntLE(byteLength: number): number {
-        const ret = this.buffer.readUIntLE(this.pos, byteLength);
-        this.pos += byteLength;
-        return ret;
-    }
     readUIntBE(byteLength: number): number {
         const ret = this.buffer.readUIntBE(this.pos, byteLength);
-        this.pos += byteLength;
-        return ret;
-    }
-    readIntLE(byteLength: number): number {
-        const ret = this.buffer.readIntLE(this.pos, byteLength);
         this.pos += byteLength;
         return ret;
     }
@@ -51,19 +42,9 @@ export default class BufferReader {
         this.pos += 1;
         return ret;
     }
-    readUInt16LE(): number {
-        let ret = this.buffer.readUInt16LE(this.pos);
-        this.pos += 2;
-        return ret;
-    }
     readUInt16BE(): number {
         let ret = this.buffer.readUInt16BE(this.pos);
         this.pos += 2;
-        return ret;
-    }
-    readUInt32LE(): number {
-        let ret = this.buffer.readUInt32LE(this.pos);
-        this.pos += 4;
         return ret;
     }
     readUInt32BE(): number {
@@ -71,24 +52,9 @@ export default class BufferReader {
         this.pos += 4;
         return ret;
     }
-    readBigUInt64LE(): BigInt {
-        let ret = this.buffer.readBigUInt64LE(this.pos);
-        this.pos += 8;
-        return ret;
-    }
-    readBigUInt64BE(): BigInt {
-        let ret = this.buffer.readBigUInt64BE(this.pos);
-        this.pos += 8;
-        return ret;
-    }
     readInt8(): number {
         let ret = this.buffer.readInt8(this.pos);
         this.pos += 1;
-        return ret;
-    }
-    readInt16LE(): number {
-        let ret = this.buffer.readInt16LE(this.pos);
-        this.pos += 2;
         return ret;
     }
     readInt16BE(): number {
@@ -96,28 +62,8 @@ export default class BufferReader {
         this.pos += 2;
         return ret;
     }
-    readInt32LE(): number {
-        let ret = this.buffer.readInt32LE(this.pos);
-        this.pos += 4;
-        return ret;
-    }
     readInt32BE(): number {
         let ret = this.buffer.readInt32BE(this.pos);
-        this.pos += 4;
-        return ret;
-    }
-    readBigInt64LE(): BigInt {
-        let ret = this.buffer.readBigInt64LE(this.pos);
-        this.pos += 8;
-        return ret;
-    }
-    readBigInt64BE(): BigInt {
-        let ret = this.buffer.readBigInt64BE(this.pos);
-        this.pos += 8;
-        return ret;
-    }
-    readFloatLE(): number {
-        let ret = this.buffer.readFloatLE(this.pos);
         this.pos += 4;
         return ret;
     }
@@ -126,15 +72,24 @@ export default class BufferReader {
         this.pos += 4;
         return ret;
     }
-    readDoubleLE(): number {
-        let ret = this.buffer.readDoubleLE(this.pos);
-        this.pos += 8;
-        return ret;
-    }
     readDoubleBE(): number {
         let ret = this.buffer.readDoubleBE(this.pos);
         this.pos += 8;
         return ret;
+    }
+
+    readUBigIntBE(bytes: number): bigint {
+        if(this.pos + bytes > this.buffer.length)
+            throw new IllegalArgumentException("read would result out-of-range");
+
+        let result = 0n;
+        for(let i = 0; i < bytes; i++) {
+            const byte = BigInt(this.readUInt8());
+            result <<= 8n;
+            result |= byte;
+        }
+
+        return result;
     }
 
     /**
@@ -146,5 +101,26 @@ export default class BufferReader {
         if(!keepPos)
             this.pos = this.buffer.length;
         return ret;
+    }
+
+    /**
+     * creates an Uint8Array as a view of the source
+     * @param length number of bytes to read
+     */
+    readUnit8Array(length: number): Uint8Array {
+        let ret = new Uint8Array(this.buffer.buffer, this.pos, length);
+        this.pos += length;
+        return ret;
+    }
+
+    readStringUtf8(): string {
+        const start = this.pos;
+        let length = 0;
+
+        // search 0-terminator
+        while(this.readUInt8() !== 0)
+            length++;
+
+        return this.buffer.toString("utf8", start, start + length);
     }
 }
