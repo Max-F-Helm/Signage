@@ -15,6 +15,7 @@ export default class Bill {
     static readonly ECC_PUBLIC_KEY_BYTES: number = libsodium.crypto_sign_PUBLICKEYBYTES;
     static readonly ECC_PRIVATE_KEY_BYTES: number = libsodium.crypto_sign_SECRETKEYBYTES;
     static readonly ECC_SIGNATURE_BYTES: number = libsodium.crypto_sign_BYTES;
+    static readonly HASH_BYTES = 256 / 8;
 
     static async wait_for_init(): Promise<null> {
         await libsodium.ready;

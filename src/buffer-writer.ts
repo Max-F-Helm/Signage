@@ -26,6 +26,14 @@ export default class BufferWriter {
     }
 
     /**
+     * return the internal buffer
+     * <br> Warning: every write can invalidate the buffer
+     */
+    getBuffer(): Buffer {
+        return this.buffer;
+    }
+
+    /**
      * copies all written content to a new Buffer
      * (pos will not be changed)
      */
@@ -94,6 +102,13 @@ export default class BufferWriter {
         }
 
         return this.pos;
+    }
+
+    writeUint8Array(value: Uint8Array) {
+        const valueBuffer = Buffer.from(value);
+        this.ensureCapacity(valueBuffer.length);
+        valueBuffer.copy(this.buffer, this.pos, 0, valueBuffer.length);
+        this.pos += valueBuffer.length;
     }
 
     writeStringUtf8(value: string) {

@@ -4,5 +4,6 @@ export default interface Author {
     name: string,
     mail: string,
     keypair: Keypair,
-    signCount: number
+    signCount: number,
+    signature: Uint8Array
 }

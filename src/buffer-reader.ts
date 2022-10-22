@@ -27,6 +27,13 @@ export default class BufferReader {
         this.pos += offset;
     }
 
+    /**
+     * return the internal buffer
+     */
+    getBuffer(): Buffer {
+        return this.buffer;
+    }
+
     readUIntBE(byteLength: number): number {
         const ret = this.buffer.readUIntBE(this.pos, byteLength);
         this.pos += byteLength;

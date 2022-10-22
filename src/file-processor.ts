@@ -8,11 +8,11 @@ import Author from "./model/Author";
 import deepEqual from "fast-deep-equal";
 import Addendum from "./model/Addendum";
 import Vote from "./model/Vote";
+import BufferWriter from "./buffer-writer";
 
 const FILE_SPEC_VERSION = 1;
 const FRAME_TYPE_ADDENDUM = 1;
 const FRAME_TYPE_VOTE = 2;
-const HASH_BYTES = 256 / 8;
 const TIMESTAMP_BYTES = 56 / 8;
 
 interface FrameWithHash {
@@ -70,7 +70,7 @@ export class FileProcessor {
         this.authors = await this.loadAuthors();
         this.checkLocalAuthorExists();
 
-        this.genesisValue = this.data.readUint8Array(HASH_BYTES);
+        this.genesisValue = this.data.readUint8Array(Bill.HASH_BYTES);
 
         const loadedFrames = await this.loadFrames();
         const genesisFrame = {frame: {} as GenesisDummyFrame, hash: this.genesisValue};
@@ -79,6 +79,8 @@ export class FileProcessor {
 
         loadedFrames.splice(loadedFrames.indexOf(genesisFrame), 1);
         this.frames = loadedFrames.map(f => f.frame);
+
+        this.data = undefined;
     }
 
     private async decryptData(data: BufferReader, key: Uint8Array): Promise<BufferReader> {
@@ -146,7 +148,8 @@ export class FileProcessor {
             name: name,
             mail: mail,
             keypair: kp,
-            signCount: signCount
+            signCount: signCount,
+            signature: signature
         };
     }
 
@@ -192,7 +195,7 @@ export class FileProcessor {
             throw new Error();
 
         const oldPos = this.data.position();
-        const prevFrameHash = this.data.readUint8Array(HASH_BYTES);
+        const prevFrameHash = this.data.readUint8Array(Bill.HASH_BYTES);
         const timestamp = this.data.readIntBE(TIMESTAMP_BYTES);
         const authorRef = this.data.readUInt16BE();
         const mime = this.data.readStringUtf8();
@@ -204,7 +207,7 @@ export class FileProcessor {
         const toHash = this.data.readUint8Array(readLength);
         const actualHash = await Bill.hash(toHash);
 
-        const hash = this.data.readUint8Array(HASH_BYTES);
+        const hash = this.data.readUint8Array(Bill.HASH_BYTES);
         if(!deepEqual(actualHash, hash)) {
             this.errorCallback("a frame has an invalid hash; dropping");
             return null;
@@ -234,10 +237,10 @@ export class FileProcessor {
             throw new Error();
 
         const oldPos = this.data.position();
-        const prevFrameHash = this.data.readUint8Array(HASH_BYTES);
+        const prevFrameHash = this.data.readUint8Array(Bill.HASH_BYTES);
         const timestamp = this.data.readIntBE(TIMESTAMP_BYTES);
         const authorRef = this.data.readUInt16BE();
-        const targetAddendumHash = this.data.readUint8Array(HASH_BYTES);
+        const targetAddendumHash = this.data.readUint8Array(Bill.HASH_BYTES);
         const vote = this.data.readUInt8() === 1;
 
         const readLength = this.data.position() - oldPos;
@@ -245,7 +248,7 @@ export class FileProcessor {
         const toHash = this.data.readUint8Array(readLength);
         const actualHash = await Bill.hash(toHash);
 
-        const hash = this.data.readUint8Array(HASH_BYTES);
+        const hash = this.data.readUint8Array(Bill.HASH_BYTES);
         if(!deepEqual(actualHash, hash)) {
             this.errorCallback("a frame has an invalid hash; dropping");
             return null;
@@ -272,7 +275,8 @@ export class FileProcessor {
                 timestamp: timestamp,
                 author: author,
                 targetAddendumHash: targetAddendumHash,
-                vote: vote
+                vote: vote,
+                signature: signature
             } as Vote,
             hash: hash
         };
@@ -374,6 +378,116 @@ export class FileProcessor {
     }
     //endregion
     //endregion
+
+    //region save file
+    async saveFile(key: Uint8Array | null): Promise<Buffer> {
+        if(this.author === null)
+            throw new IlligalStateException("no author was set");
+        if(this.authors === undefined)
+            throw new IlligalStateException("no file is loaded");
+
+        const data = new BufferWriter();
+
+        data.writeUInt8(FILE_SPEC_VERSION);
+        await this.writeAuthors(data);
+        data.writeUint8Array(this.genesisValue!);
+        await this.writeAuthors(data);
+        await this.writeFrames(data);
+
+        const dataFinal = data.take();
+        if(this.encryptFile){
+            if(key === null)
+                throw new IllegalArgumentException("key must be provided if encryptFile is enabled");
+            return Buffer.from(await Bill.encrypt(dataFinal, key));
+        }else {
+            return dataFinal;
+        }
+    }
+
+    private async writeAuthors(data: BufferWriter) {
+        const authors = this.authors!;
+        data.writeUInt16BE(authors.length);
+
+        for(const author of authors)
+            await this.writeAuthor(data, author);
+    }
+
+    private async writeAuthor(data: BufferWriter, author: Author) {
+        const oldPos = data.position();
+
+        data.writeStringUtf8(author.name);
+        data.writeStringUtf8(author.mail);
+        data.writeUint8Array(author.keypair.publicKey);
+        data.writeUInt32BE(author.signCount);
+
+        if(deepEqual(author, this.author)) {
+            author.signature = await this.sign(data, oldPos);
+        }
+
+        data.writeUint8Array(author.signature);
+    }
+
+    private async writeFrames(data: BufferWriter) {
+        for(const frame of this.frames!) {
+            switch (frame.frameType) {
+                case FrameType.Addendum:
+                    data.writeUInt8(FRAME_TYPE_ADDENDUM);
+                    await this.writeAddendumFrame(data, frame as Addendum);
+                    break;
+                case FrameType.Vote:
+                    data.writeUInt8(FRAME_TYPE_VOTE);
+                    await this.writeVoteFrame(data, frame as Vote);
+                    break;
+            }
+        }
+    }
+
+    private async writeAddendumFrame(data: BufferWriter, frame: Addendum) {
+        if(frame.data.byteLength > 2**32)
+            throw new FileContentsException("data of addendum must be <= 2^32 bytes");
+
+        const oldPos = data.position();
+
+        data.writeUint8Array(frame.prevFrameHash);
+        data.writeUIntBE(frame.timestamp, TIMESTAMP_BYTES);
+        data.writeUInt16BE(this.authors!.indexOf(frame.author));
+        data.writeStringUtf8(frame.type);
+        data.writeUInt32BE(frame.data.byteLength);
+        data.writeUint8Array(frame.data);
+
+        data.writeUint8Array(await this.hashFrame(data, oldPos));
+    }
+
+    private async writeVoteFrame(data: BufferWriter, frame: Vote) {
+        const oldPos = data.position();
+
+        data.writeUint8Array(frame.prevFrameHash);
+        data.writeUIntBE(frame.timestamp, TIMESTAMP_BYTES);
+        data.writeUInt16BE(this.authors!.indexOf(frame.author));
+        data.writeUint8Array(frame.targetAddendumHash);
+        data.writeInt8(frame.vote ? 1 : 0);
+
+        data.writeUint8Array(await this.hashFrame(data, oldPos));
+        data.writeUint8Array(await this.sign(data, oldPos, data.position() - Bill.HASH_BYTES));
+    }
+    //endregion
+
+    private async hashFrame(data: BufferWriter, frameStart: number, frameEnd: number = -1): Promise<Uint8Array> {
+        if(frameEnd === -1)
+            frameEnd = data.position();
+
+        const reader = new BufferReader(data.getBuffer());
+        const frameLength = frameEnd - frameStart;
+        reader.setPositionAbs(frameStart);
+        const frameData = reader.readUint8Array(frameLength);
+
+        return await Bill.hash(frameData);
+    }
+
+    private async sign(data: BufferWriter, frameStart: number, frameEnd: number = -1): Promise<Uint8Array> {
+        const hash = await this.hashFrame(data, frameStart, frameEnd);
+        return await Bill.sign_data(hash, this.author!.keypair);
+    }
 }
 
 //region utils
