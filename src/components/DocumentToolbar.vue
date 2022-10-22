@@ -6,6 +6,7 @@
       </template>
       <template #end>
         <MyButton label="Patchset importieren" icon="pi pi-upload" @click="importPatchSet" />
+        <Modal2 :modalStatus="modalStatus"/>
       </template>
     </Toolbar>
   </main>
@@ -14,19 +15,23 @@
 <script>
 import MyButton from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
+import Modal2 from "@/components/Modal2";
 import Modal from './Modal.vue';
 export default {
   name: "StartPage",
   components:{
     MyButton,
-    Toolbar
+    Toolbar,
+    Modal2
   },
   data() {
-    return {}
+    return {
+      modalStatus: false
+    }
   },
   methods: {
     importPatchSet() {
-
+      this.modalStatus = true
     }
   }
 }
