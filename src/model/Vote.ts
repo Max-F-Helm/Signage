@@ -1,6 +1,6 @@
 import Frame from "./Frame";
 
 export default interface Vote extends Frame{
-    targetAddendumHash: BigInt,
+    targetAddendumHash: Uint8Array,
     vote: boolean
 }

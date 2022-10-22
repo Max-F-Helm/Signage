@@ -1,7 +1,7 @@
 import Author from "./Author";
 
 export default interface Frame{
-    prevFrameHash: BigInt,
-    timestamp: BigInt,
+    prevFrameHash: Uint8Array,
+    timestamp: number,
     author: Author,
 }
