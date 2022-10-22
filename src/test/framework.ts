@@ -1,3 +1,5 @@
+import should from "should";
+
 export function describe(desc: string, exec: () => Promise<void>): () => Promise<void> {
     return async () => {
         console.info("\nrunning test " + desc);
@@ -20,6 +22,24 @@ file: ${extractTestLocation(e.stack)}
             }
         }
     }
+}
+
+export async function shouldThrow(msg: string, block: () => Promise<void>) {
+    let ranThrough = false;
+    try {
+        await block();
+        ranThrough = true;
+    } catch (e) {}
+    should(ranThrough).false(msg);
+}
+
+export async function shouldNotThrow(msg: string, block: () => Promise<void>) {
+    let ranThrough = false;
+    try {
+        await block();
+        ranThrough = true;
+    } catch (e) {}
+    should(ranThrough).true(msg);
 }
 
 function extractTestLocation(trace: string): string {

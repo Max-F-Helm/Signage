@@ -1,4 +1,4 @@
-import {describe} from "@/test/framework";
+import {describe, shouldThrow} from "@/test/framework";
 import should from "should";
 import IdentityProcessor from "@/processing/identity-processor";
 import BufferWriter from "@/processing/buffer-writer";
@@ -66,15 +66,13 @@ export default [
         await IdentityProcessor.saveAuthor(buffer, author);
 
         // corrupt data
+        const oldPos = buffer.position();
         buffer.setPositionAbs(2);
         buffer.writeInt8(2);
+        buffer.setPositionAbs(oldPos);
 
-        let ranThrough = false;
-        try {
+        await shouldThrow("should have thrown an exception", async () => {
             await IdentityProcessor.loadAuthor(new BufferReader(buffer.take()));
-            ranThrough = true;
-        } catch (e) {}
-
-        should(ranThrough).false("should have thrown an exception");
+        });
     })
 ];
