@@ -4,7 +4,7 @@ import IdentityProcessor from "@/processing/identity-processor";
 import BufferWriter from "@/processing/buffer-writer";
 import BufferReader from "@/processing/buffer-reader";
 import Bill from "@/processing/bill";
-import deepEqual from "fast-deep-equal";
+import deepEqual from "@/deep-equals";
 
 const name = "myIden";
 const mail = "test@example.com";

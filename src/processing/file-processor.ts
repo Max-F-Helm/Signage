@@ -1,5 +1,5 @@
 import {Buffer} from "buffer";
-import deepEqual from "fast-deep-equal";
+import deepEqual from "@/deep-equals";
 import BufferReader from "./buffer-reader";
 import BufferWriter from "./buffer-writer";
 import {FileContentsException, IllegalArgumentException, IllegalStateException} from "./exceptions";

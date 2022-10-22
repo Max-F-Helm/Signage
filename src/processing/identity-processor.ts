@@ -2,7 +2,7 @@ import type BufferReader from "@/processing/buffer-reader";
 import BufferWriter from "@/processing/buffer-writer";
 import type {Keypair} from "@/processing/bill";
 import Bill from "@/processing/bill";
-import deepEqual from "fast-deep-equal";
+import deepEqual from "@/deep-equals";
 import type Author from "@/processing/model/Author";
 import {hashFrame, signFrame} from "@/processing/utils";
 import {FileContentsException, IllegalArgumentException} from "@/processing/exceptions";
