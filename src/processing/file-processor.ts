@@ -95,7 +95,7 @@ export class FileProcessor {
             prevFrameHash: null,
             // @ts-ignore
             author: null,
-            timestamp: 0,
+            timestamp: Number.MIN_SAFE_INTEGER + 1,
             hash: this.genesisValue
         };
         loadedFrames.push(genesisFrame);
@@ -264,6 +264,10 @@ export class FileProcessor {
 
     private sortFrames(frames: Frame[]) {
         frames.sort((a, b) => {
+            if(a.prevFrameHash === null)
+                return -1;
+            if(b.prevFrameHash === null)
+                return 1;
            if(deepEqual(a.hash, b.prevFrameHash))
                return -1;
            if(deepEqual(b.hash, a.prevFrameHash))
@@ -281,15 +285,19 @@ export class FileProcessor {
         if(!isUint8ArrayArrUnique(parents))
             return false;
 
-        for(const f of chain)
-            parents.splice(parents.findIndex(hash => deepEqual(hash, f.prevFrameHash)), 1);
+        for(const f of chain){
+            const idx = parents.findIndex(hash => deepEqual(hash, f.prevFrameHash));
+            if(idx !== -1)
+                parents.splice(idx, 1);
+        }
+
         return parents.length == 1;
     }
 
     private checkTimestampsAscending(chain: Frame[]): boolean {
         let lastTimestamp = Number.MIN_SAFE_INTEGER;
         for(const f of chain) {
-            if(f.timestamp > lastTimestamp)
+            if(f.timestamp >= lastTimestamp)
                 lastTimestamp = f.timestamp;
             else
                 return false;
@@ -357,7 +365,6 @@ export class FileProcessor {
         data.writeUInt8(FILE_SPEC_VERSION);
         await this.writeAuthors(data);
         data.writeUint8Array(this.genesisValue!);
-        await this.writeAuthors(data);
         await this.writeFrames(data, this.frames!);
 
         const dataFinal = data.take();
@@ -376,7 +383,9 @@ export class FileProcessor {
 
         for(const author of authors) {
             if(IdentityProcessor.equals(author, this.author!)) {
+                author.signCount = this.author!.signCount;
                 await IdentityProcessor.signAndSaveAuthor(data, author);
+                this.author!.signature = author.signature;// sync so that tests work
             } else {
                 await IdentityProcessor.saveAuthor(data, author);
             }
@@ -404,7 +413,7 @@ export class FileProcessor {
 
         data.writeUint8Array(frame.prevFrameHash);
         data.writeUIntBE(frame.timestamp, TIMESTAMP_BYTES);
-        data.writeUInt16BE(this.authors!.indexOf(frame.author));
+        data.writeUInt16BE(this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, this.author!.keypair.publicKey)));
         data.writeStringUtf8(frame.title);
         data.writeStringUtf8(frame.type);
         data.writeUInt32BE(frame.data.byteLength);
@@ -415,7 +424,7 @@ export class FileProcessor {
     private async writeVoteFrame(data: BufferWriter, frame: Vote) {
         data.writeUint8Array(frame.prevFrameHash);
         data.writeUIntBE(frame.timestamp, TIMESTAMP_BYTES);
-        data.writeUInt16BE(this.authors!.indexOf(frame.author));
+        data.writeUInt16BE(this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, this.author!.keypair.publicKey)));
         data.writeUint8Array(frame.targetAddendumHash);
         data.writeInt8(frame.vote ? 1 : 0);
         data.writeUint8Array(frame.hash);
@@ -438,7 +447,7 @@ export class FileProcessor {
         }
 
         const timestamp = Date.now();
-        const authorRef = this.authors!.indexOf(this.author!);
+        const authorRef = this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, this.author!.keypair.publicKey));
         const contentLength = content.byteLength;
 
         const hashBuffer = new BufferWriter();
@@ -479,7 +488,7 @@ export class FileProcessor {
 
         const prevFrameHash: Uint8Array = this.frames[this.frames.length - 1].hash;
         const timestamp = Date.now();
-        const authorRef = this.authors!.indexOf(this.author!);
+        const authorRef = this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, this.author!.keypair.publicKey));
 
         let lastAddendumHash: Uint8Array | null = null;
         for(let i = this.frames.length - 1; i >= 0; i--) {
@@ -491,7 +500,6 @@ export class FileProcessor {
         }
         if(lastAddendumHash === null)
             throw new IllegalStateException("no addendum exist");
-
 
         const hashBuffer = new BufferWriter();
         hashBuffer.writeUint8Array(prevFrameHash);
@@ -513,6 +521,8 @@ export class FileProcessor {
             hash: hash,
             signature: signature
         };
+
+        this.author!.signCount++;
 
         this.frames.push(frame);
         this.addedFrames.push(frame);
@@ -538,7 +548,7 @@ export class FileProcessor {
             prevFrameHash: null,
             // @ts-ignore
             author: null,
-            timestamp: 0,
+            timestamp: Number.MIN_SAFE_INTEGER + 1,
             hash: prevFrameHash
         };
         loadedFrames.push(genesisFrame);
