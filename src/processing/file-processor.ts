@@ -38,6 +38,8 @@ export class FileProcessor {
     private frames: Frame[] | undefined;
     private genesisValue: Uint8Array | undefined;
 
+    private readonly addedFrames: Frame[] = [];
+
     constructor(identity: Identity, encryptFile: boolean, errorCallback: ErrorCallback) {
         this.identity = identity;
         this.encryptFile = encryptFile;
@@ -421,22 +423,96 @@ export class FileProcessor {
     }
     //endregion
 
-    //region utils
-    private async hashFrame(data: BufferWriter | BufferReader, frameStart: number, frameEnd: number = -1): Promise<Uint8Array> {
-        if(frameEnd === -1)
-            frameEnd = data.position();
+    //region modify
+    async addAddendum(title: string, mime: string, content: Buffer) {
+        if(this.identity === null)
+            throw new IllegalStateException("no identity was set");
+        if(this.frames === undefined)
+            throw new IllegalStateException("no file is loaded");
 
-        const reader = new BufferReader(data.getBuffer());
-        const frameLength = frameEnd - frameStart;
-        reader.setPositionAbs(frameStart);
-        const frameData = reader.readUint8Array(frameLength);
+        let prevFrameHash: Uint8Array;
+        if(this.frames.length > 0) {
+            prevFrameHash = this.frames[this.frames.length - 1].hash;
+        } else {
+            prevFrameHash = this.genesisValue!;
+        }
 
-        return await Bill.hash(frameData);
+        const timestamp = Date.now();
+        const authorRef = this.authors!.indexOf(this.author!);
+        const contentLength = content.byteLength;
+
+        const hashBuffer = new BufferWriter();
+        hashBuffer.writeUint8Array(prevFrameHash);
+        hashBuffer.writeIntBE(timestamp, TIMESTAMP_BYTES);
+        hashBuffer.writeUInt16BE(authorRef);
+        hashBuffer.writeStringUtf8(title);
+        hashBuffer.writeStringUtf8(mime);
+        hashBuffer.writeUInt32BE(contentLength);
+        hashBuffer.writeUint8Array(content);
+        const hash = await hashFrame(hashBuffer, 0);
+
+        const frame: Addendum = {
+            frameType: FrameType.Addendum,
+            prevFrameHash: prevFrameHash,
+            timestamp: timestamp,
+            author: this.author!,
+            title: title,
+            type: mime,
+            data: content,
+            hash: hash
+        };
+
+        this.frames.push(frame);
+        this.addedFrames.push(frame);
     }
 
-    private async sign(data: BufferWriter, frameStart: number, frameEnd: number = -1): Promise<Uint8Array> {
-        const hash = await this.hashFrame(data, frameStart, frameEnd);
-        return await Bill.sign_data(hash, this.author!.keypair);
+    async addVote(vote: boolean) {
+        if(this.identity === null)
+            throw new IllegalStateException("no identity was set");
+        if(this.frames === undefined)
+            throw new IllegalStateException("no file is loaded");
+        if(this.frames.length === 0)
+            throw new IllegalStateException("no addendum exist");
+
+        const prevFrameHash: Uint8Array = this.frames[this.frames.length - 1].hash;
+        const timestamp = Date.now();
+        const authorRef = this.authors!.indexOf(this.author!);
+
+        let lastAddendumHash: Uint8Array | null = null;
+        for(let i = this.frames.length - 1; i >= 0; i--) {
+            const f = this.frames[i];
+            if(f.frameType === FrameType.Addendum) {
+                lastAddendumHash = f.hash;
+                break;
+            }
+        }
+        if(lastAddendumHash === null)
+            throw new IllegalStateException("no addendum exist");
+
+
+        const hashBuffer = new BufferWriter();
+        hashBuffer.writeUint8Array(prevFrameHash);
+        hashBuffer.writeIntBE(timestamp, TIMESTAMP_BYTES);
+        hashBuffer.writeUInt16BE(authorRef);
+        hashBuffer.writeUint8Array(lastAddendumHash);
+        hashBuffer.writeInt8(vote ? 1 : 0);
+
+        const hash = await hashFrame(hashBuffer, 0);
+        const signature = await Bill.sign_data(hash, this.author!.keypair);
+
+        const frame: Vote = {
+            frameType: FrameType.Vote,
+            prevFrameHash: prevFrameHash,
+            timestamp: timestamp,
+            author: this.author!,
+            targetAddendumHash: lastAddendumHash,
+            vote: vote,
+            hash: hash,
+            signature: signature
+        };
+
+        this.frames.push(frame);
+        this.addedFrames.push(frame);
     }
-    //region utils
+    //endregion
 }
