@@ -5,10 +5,10 @@
       <h3>{{msg2}}</h3>
       <div class="StartPageButtons">
         <div>
-          <MyButton>{{msg3}}</MyButton>
+          <MyButton @click="loadLatestDocument">{{msg3}}</MyButton>
         </div>
         <div>
-          <MyButton class="p-button-secondary">{{msg4}}</MyButton>
+          <MyButton @click="loadFile" class="p-button-secondary">{{msg4}}</MyButton>
         </div>
       </div>
     </div>
@@ -28,6 +28,14 @@ export default {
       msg2: "Was soll geladen werden?",
       msg3: "zuletzt verwendetes Dokument",
       msg4: "Datei auswählen"
+    }
+  },
+  methods: {
+    loadLatestDocument() {
+      this.$router.push({path: '/'})
+    },
+    loadFile() {
+      this.$router.push({path: '/'})
     }
   }
 }
