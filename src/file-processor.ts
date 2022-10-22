@@ -1,14 +1,14 @@
-import BufferReader from "./buffer-reader";
-import "./exceptions";
-import {FileContentsException, IllegalArgumentException, IlligalStateException} from "./exceptions";
-import Bill, {Keypair} from "./bill";
 import {Buffer} from "buffer";
-import Frame, {FrameType} from "./model/Frame";
-import Author from "./model/Author";
 import deepEqual from "fast-deep-equal";
-import Addendum from "./model/Addendum";
-import Vote from "./model/Vote";
+import BufferReader from "./buffer-reader";
 import BufferWriter from "./buffer-writer";
+import {FileContentsException, IllegalArgumentException, IllegalStateException} from "./exceptions";
+import Bill, {type Keypair} from "./bill";
+import type Frame from "./model/Frame";
+import {FrameType} from "./model/Frame";
+import type Author from "./model/Author";
+import type Addendum from "./model/Addendum";
+import type Vote from "./model/Vote";
 
 const FILE_SPEC_VERSION = 1;
 const FRAME_TYPE_ADDENDUM = 1;
@@ -45,13 +45,13 @@ export class FileProcessor {
 
     getAuthors(): Author[] {
         if(this.authors === undefined)
-            throw new IlligalStateException("no file is loaded");
+            throw new IllegalStateException("no file is loaded");
         return this.authors;
     }
 
     getFrames(): Frame[] {
         if(this.frames === undefined)
-            throw new IlligalStateException("no file is loaded");
+            throw new IllegalStateException("no file is loaded");
         return this.frames;
     }
 
@@ -358,9 +358,9 @@ export class FileProcessor {
     //region save file
     async saveFile(key: Uint8Array | null): Promise<Buffer> {
         if(this.author === null)
-            throw new IlligalStateException("no author was set");
+            throw new IllegalStateException("no author was set");
         if(this.authors === undefined)
-            throw new IlligalStateException("no file is loaded");
+            throw new IllegalStateException("no file is loaded");
 
         const data = new BufferWriter();
 

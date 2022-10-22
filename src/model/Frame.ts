@@ -1,4 +1,4 @@
-import Author from "./Author";
+import type Author from "./Author";
 
 export enum FrameType {
     Addendum,

@@ -1,4 +1,4 @@
-import {Keypair} from "../bill";
+import type {Keypair} from "@/bill";
 
 export default interface Author {
     name: string,

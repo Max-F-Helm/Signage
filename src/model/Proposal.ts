@@ -1,5 +1,5 @@
-import Author from "./Author";
-import Frame from "./Frame";
+import type Author from "./Author";
+import type Frame from "./Frame";
 
 export default interface Proposal{
     version: number,

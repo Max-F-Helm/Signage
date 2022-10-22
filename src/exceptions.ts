@@ -12,7 +12,7 @@ export class FileContentsException extends Error {
     }
 }
 
-export class IlligalStateException extends Error {
+export class IllegalStateException extends Error {
     constructor(msg: string) {
         super(msg);
     }
