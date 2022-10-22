@@ -59,6 +59,7 @@
   font-weight: normal;
 }
 
+
 body {
   min-height: 100vh;
   color: var(--color-text);
@@ -72,3 +73,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+
+
