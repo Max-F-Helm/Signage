@@ -398,8 +398,7 @@ export class FileProcessor {
         data.writeUInt16BE(authors.length);
 
         for(const author of authors) {
-            if(IdentityProcessor.equals(author, this.author!)) {
-                author.signCount = this.author!.signCount;
+            if(author === this.author) {
                 await IdentityProcessor.signAndSaveAuthor(data, author);
             } else {
                 await IdentityProcessor.saveAuthor(data, author);
@@ -560,47 +559,73 @@ export class FileProcessor {
         if(this.frames === undefined)
             throw new IllegalStateException("no file is loaded");
 
-        const loadedFrames = await this.loadFrames(data);
-
-        let prevFrameHash: Uint8Array;
-        if(this.frames.length !== 0)
-            prevFrameHash = this.frames[this.frames.length - 1].hash;
-        else
-            prevFrameHash = this.genesisValue!;
-
-        const genesisFrame: GenesisDummyFrame = {
-            frameType: FrameType.Invalid,
-            // @ts-ignore
-            prevFrameHash: null,
-            // @ts-ignore
-            author: null,
-            timestamp: Number.MIN_SAFE_INTEGER + 1,
-            hash: prevFrameHash
-        };
-        loadedFrames.push(genesisFrame);
-        this.checkChainIntegrity(loadedFrames);
-
-        if(loadedFrames[0] !== genesisFrame)
-            throw new Error("assertion failed");
-        loadedFrames.splice(0, 1);
-
-        this.frames.push(...loadedFrames);
+        await this.importAuthor(data);
+        await this.importFrames(data);
     }
 
-    async exportChanges(data: BufferWriter) {
+    private async importAuthor(data: BufferReader) {
+        let loadedAuthor: Author;
+        try {
+            loadedAuthor = await IdentityProcessor.loadAuthor(data);
+        } catch(e) {
+            this.errorCallback(`invalid author (${e}); dropping`);
+            return;
+        }
+
+        const authorIdx = this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, loadedAuthor.keypair.publicKey));
+        if(authorIdx === -1)
+            throw new FileContentsException("author of PatchSet is not an author of this proposal");
+
+        const orgAuthor = this.authors![authorIdx];
+        if(orgAuthor === this.author) {
+            loadedAuthor.keypair.privateKey = this.author.keypair.privateKey;
+            this.author = loadedAuthor;
+        }
+        this.frames!.forEach(f => {
+            if(f.author === orgAuthor)
+                f.author = loadedAuthor;
+        });
+        this.authors![authorIdx] = loadedAuthor;
+    }
+
+    private async importFrames(data: BufferReader) {
+        const loadedFrames = await this.loadFrames(data);
+        const newChain = [...this.frames!, ...loadedFrames];
+        this.checkChainIntegrity(newChain);
+        this.frames = newChain;
+    }
+
+    async exportChanges(): Promise<Buffer> {
+        if(this.frames === undefined)
+            throw new IllegalStateException("no file is loaded");
+        if(this.author === null)
+            throw new IllegalStateException("no identity was set");
+
+        const data = new BufferWriter();
+
+        await IdentityProcessor.signAndSaveAuthor(data, this.author);
         await this.writeFrames(data, this.addedFrames);
+
+        return data.take();
     }
 
     /**
-     * @param data writer to write to
      * @param count number of frames to exported; counted from back to front
      */
-    async exportFrames(data: BufferWriter, count: number) {
+    async exportFrames(count: number): Promise<Buffer> {
         if(this.frames === undefined)
             throw new IllegalStateException("no file is loaded");
+        if(this.author === null)
+            throw new IllegalStateException("no identity was set");
+
+        const data = new BufferWriter();
+
+        await IdentityProcessor.signAndSaveAuthor(data, this.author);
 
         const frames = this.frames.slice(this.frames.length - count);
         await this.writeFrames(data, frames);
+
+        return data.take();
     }
 
     getChangesCount(): number {
