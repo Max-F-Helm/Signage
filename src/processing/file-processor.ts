@@ -358,7 +358,7 @@ export class FileProcessor {
         await this.writeAuthors(data);
         data.writeUint8Array(this.genesisValue!);
         await this.writeAuthors(data);
-        await this.writeFrames(data);
+        await this.writeFrames(data, this.frames!);
 
         const dataFinal = data.take();
         if(this.encryptFile){
@@ -383,8 +383,8 @@ export class FileProcessor {
         }
     }
 
-    private async writeFrames(data: BufferWriter) {
-        for(const frame of this.frames!) {
+    private async writeFrames(data: BufferWriter, frames: Frame[]) {
+        for(const frame of frames) {
             switch (frame.frameType) {
                 case FrameType.Addendum:
                     data.writeUInt8(FRAME_TYPE_ADDENDUM);
@@ -513,6 +513,63 @@ export class FileProcessor {
 
         this.frames.push(frame);
         this.addedFrames.push(frame);
+    }
+    //endregion
+
+    //region patches
+    async importPatchSet(data: BufferReader) {
+        if(this.frames === undefined)
+            throw new IllegalStateException("no file is loaded");
+
+        const loadedFrames = await this.loadFrames(data);
+
+        let prevFrameHash: Uint8Array;
+        if(this.frames.length !== 0)
+            prevFrameHash = this.frames[this.frames.length - 1].hash;
+        else
+            prevFrameHash = this.genesisValue!;
+
+        const genesisFrame: GenesisDummyFrame = {
+            frameType: FrameType.Invalid,
+            // @ts-ignore
+            prevFrameHash: null,
+            // @ts-ignore
+            author: null,
+            timestamp: 0,
+            hash: prevFrameHash
+        };
+        loadedFrames.push(genesisFrame);
+        this.checkChainIntegrity(loadedFrames);
+
+        if(loadedFrames[0] !== genesisFrame)
+            throw new Error("assertion failed");
+        loadedFrames.splice(0, 1);
+
+        this.frames.push(...loadedFrames);
+    }
+
+    async exportChanges(data: BufferWriter) {
+        await this.writeFrames(data, this.addedFrames);
+    }
+
+    /**
+     * @param data writer to write to
+     * @param count number of frames to exported; counted from back to front
+     */
+    async exportFrames(data: BufferWriter, count: number) {
+        if(this.frames === undefined)
+            throw new IllegalStateException("no file is loaded");
+
+        const frames = this.frames.slice(this.frames.length - count);
+        await this.writeFrames(data, frames);
+    }
+
+    getChangesCount(): number {
+        return this.addedFrames.length;
+    }
+
+    clearChanges() {
+        this.addedFrames.splice(0);
     }
     //endregion
 }
