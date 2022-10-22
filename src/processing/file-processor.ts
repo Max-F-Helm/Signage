@@ -9,18 +9,13 @@ import {FrameType} from "./model/Frame";
 import type Author from "./model/Author";
 import type Addendum from "./model/Addendum";
 import type Vote from "./model/Vote";
-import IdentityProcessor from "@/processing/identity-processor";
 import type {Identity} from "@/processing/identity-processor";
+import IdentityProcessor from "@/processing/identity-processor";
 
 const FILE_SPEC_VERSION = 1;
 const FRAME_TYPE_ADDENDUM = 1;
 const FRAME_TYPE_VOTE = 2;
 const TIMESTAMP_BYTES = 56 / 8;
-
-interface FrameWithHash {
-    frame: Frame,
-    hash: Uint8Array
-}
 
 interface GenesisDummyFrame extends Frame {}
 
@@ -60,9 +55,17 @@ export class FileProcessor {
 
     //region create file
     async createFile(authors: Author[]) {
+        if(this.identity === null)
+            throw new IllegalStateException("no identity was set");
+
+        const author = IdentityProcessor.toAuthor(this.identity);
+        if(!authors.some(a => IdentityProcessor.equals(a, author)))
+            throw new IllegalArgumentException("set identity must be part of authors");
+
         this.authors = authors;
         this.frames = [];
         this.genesisValue = await Bill.random_bytes(Bill.HASH_BYTES);
+        this.author = author;
     }
     //endregion
 
@@ -83,12 +86,22 @@ export class FileProcessor {
         this.genesisValue = data.readUint8Array(Bill.HASH_BYTES);
 
         const loadedFrames = await this.loadFrames(data);
-        const genesisFrame = {frame: {} as GenesisDummyFrame, hash: this.genesisValue};
+        const genesisFrame: GenesisDummyFrame = {
+            frameType: FrameType.Invalid,
+            // @ts-ignore
+            prevFrameHash: null,
+            // @ts-ignore
+            author: null,
+            timestamp: 0,
+            hash: this.genesisValue
+        };
         loadedFrames.push(genesisFrame);
         this.checkChainIntegrity(loadedFrames);
 
-        loadedFrames.splice(loadedFrames.indexOf(genesisFrame), 1);
-        this.frames = loadedFrames.map(f => f.frame);
+        if(loadedFrames[0] !== genesisFrame)
+            throw new Error("assertion failed");
+        loadedFrames.splice(0, 1);
+        this.frames = loadedFrames;
     }
 
     private async decryptData(data: BufferReader, key: Uint8Array): Promise<BufferReader> {
@@ -154,10 +167,10 @@ export class FileProcessor {
         };
     }
 
-    private async loadFrames(data: BufferReader): Promise<FrameWithHash[]> {
-        const frames = [] as FrameWithHash[];
+    private async loadFrames(data: BufferReader): Promise<Frame[]> {
+        const frames = [] as Frame[];
         while(!data.isAtEnd()) {
-            let frame: FrameWithHash | null = null;
+            let frame: Frame | null = null;
             const type = data.readUInt8();
             switch (type){
                 case FRAME_TYPE_ADDENDUM:
@@ -175,7 +188,7 @@ export class FileProcessor {
         return frames;
     }
 
-    private async loadAddendumFrame(data: BufferReader): Promise<FrameWithHash | null> {
+    private async loadAddendumFrame(data: BufferReader): Promise<Addendum | null> {
         const oldPos = data.position();
         const prevFrameHash = data.readUint8Array(Bill.HASH_BYTES);
         const timestamp = data.readIntBE(TIMESTAMP_BYTES);
@@ -200,20 +213,18 @@ export class FileProcessor {
         }
 
         return {
-            frame: {
-                frameType: FrameType.Addendum,
-                prevFrameHash: prevFrameHash,
-                timestamp: timestamp,
-                author: author,
-                title: title,
-                type: mime,
-                data: addendumData
-            } as Addendum,
+            frameType: FrameType.Addendum,
+            prevFrameHash: prevFrameHash,
+            timestamp: timestamp,
+            author: author,
+            title: title,
+            type: mime,
+            data: addendumData,
             hash: hash
         };
     }
 
-    private async loadVoteFrame(data: BufferReader): Promise<FrameWithHash | null> {
+    private async loadVoteFrame(data: BufferReader): Promise<Vote | null> {
         const oldPos = data.position();
         const prevFrameHash = data.readUint8Array(Bill.HASH_BYTES);
         const timestamp = data.readIntBE(TIMESTAMP_BYTES);
@@ -244,21 +255,19 @@ export class FileProcessor {
         }
 
         return {
-            frame: {
-                frameType: FrameType.Vote,
-                prevFrameHash: prevFrameHash,
-                timestamp: timestamp,
-                author: author,
-                targetAddendumHash: targetAddendumHash,
-                vote: vote,
-                signature: signature
-            } as Vote,
+            frameType: FrameType.Vote,
+            prevFrameHash: prevFrameHash,
+            timestamp: timestamp,
+            author: author,
+            targetAddendumHash: targetAddendumHash,
+            vote: vote,
+            signature: signature,
             hash: hash
         };
     }
 
     //region integrity checks
-    private checkChainIntegrity(frames: FrameWithHash[]) {
+    private checkChainIntegrity(frames: Frame[]) {
         this.sortFrames(frames);
 
         if(!this.checkIsChainLinear(frames))
@@ -275,47 +284,51 @@ export class FileProcessor {
             this.errorCallback("author sign-count does not match");
     }
 
-    private sortFrames(frames: FrameWithHash[]) {
+    private sortFrames(frames: Frame[]) {
         frames.sort((a, b) => {
-           if(deepEqual(a.hash, b.frame.prevFrameHash))
+           if(deepEqual(a.hash, b.prevFrameHash))
                return -1;
-           if(deepEqual(b.hash, a.frame.prevFrameHash))
+           if(deepEqual(b.hash, a.prevFrameHash))
                return 1;
            return 0;
         });
     }
 
-    private checkIsChainLinear(chain: FrameWithHash[]): boolean {
+    private checkIsChainLinear(chain: Frame[]): boolean {
+        for(const f of chain)
+            if(deepEqual(f.hash, f.prevFrameHash))
+                return false;
+
         const parents = chain.map(f => f.hash);
         if(!isUint8ArrayArrUnique(parents))
             return false;
 
         for(const f of chain)
-            parents.splice(parents.findIndex(hash => deepEqual(hash, f.frame.prevFrameHash)), 1);
+            parents.splice(parents.findIndex(hash => deepEqual(hash, f.prevFrameHash)), 1);
         return parents.length == 1;
     }
 
-    private checkTimestampsAscending(chain: FrameWithHash[]): boolean {
+    private checkTimestampsAscending(chain: Frame[]): boolean {
         let lastTimestamp = Number.MIN_SAFE_INTEGER;
         for(const f of chain) {
-            if(f.frame.timestamp > lastTimestamp)
-                lastTimestamp = f.frame.timestamp;
+            if(f.timestamp > lastTimestamp)
+                lastTimestamp = f.timestamp;
             else
                 return false;
         }
         return true;
     }
 
-    private checkClockInFuture(chain: FrameWithHash[]): boolean {
-        const lastTimestamp = chain[chain.length - 1].frame.timestamp;
+    private checkClockInFuture(chain: Frame[]): boolean {
+        const lastTimestamp = chain[chain.length - 1].timestamp;
         const currentTime = Date.now();
         return currentTime > lastTimestamp;
     }
 
-    private checkVoteTargetsExist(chain: FrameWithHash[]): boolean {
-        const addendumHashes = chain.filter(f => f.frame.frameType === FrameType.Addendum).map(f => f.hash);
-        for(const v of chain.filter(f => f.frame.frameType === FrameType.Vote)) {
-            const vote = v.frame as Vote;
+    private checkVoteTargetsExist(chain: Frame[]): boolean {
+        const addendumHashes = chain.filter(f => f.frameType === FrameType.Addendum).map(f => f.hash);
+        for(const v of chain.filter(f => f.frameType === FrameType.Vote)) {
+            const vote = v as Vote;
             if(!addendumHashes.some(hash => deepEqual(hash, vote.targetAddendumHash))) {
                 return false;
             }
@@ -323,11 +336,11 @@ export class FileProcessor {
         return true;
     }
 
-    private checkAllAddendiVoted(chain: FrameWithHash[]): boolean {
-        const addendumHashes = chain.filter(f => f.frame.frameType === FrameType.Addendum).map(f => f.hash);
+    private checkAllAddendiVoted(chain: Frame[]): boolean {
+        const addendumHashes = chain.filter(f => f.frameType === FrameType.Addendum).map(f => f.hash);
         const voteTargets = chain
-            .filter(f => f.frame.frameType === FrameType.Vote)
-            .map(f => (f.frame as Vote).targetAddendumHash);
+            .filter(f => f.frameType === FrameType.Vote)
+            .map(f => (f as Vote).targetAddendumHash);
 
         for(const addendum of addendumHashes)
             if(!voteTargets.some(hash => deepEqual(hash, addendum)))
@@ -335,14 +348,14 @@ export class FileProcessor {
         return true;
     }
 
-    private checkAuthorSignCount(chain: FrameWithHash[]): boolean {
+    private checkAuthorSignCount(chain: Frame[]): boolean {
         const signCounts = new Map<Author, number>();
 
         for(const author of this.authors!)
             signCounts.set(author, 0);
 
-        for(const v of chain.filter(f => f.frame.frameType === FrameType.Vote)) {
-            const vote = v.frame as Vote;
+        for(const v of chain.filter(f => f.frameType === FrameType.Vote)) {
+            const vote = v as Vote;
             signCounts.set(vote.author, signCounts.get(vote.author)! + 1);
         }
 
@@ -356,8 +369,8 @@ export class FileProcessor {
 
     //region save file
     async saveFile(key: Uint8Array | null): Promise<Buffer> {
-        if(this.author === null)
-            throw new IllegalStateException("no author was set");
+        if(this.identity === null)
+            throw new IllegalStateException("no identity was set");
         if(this.authors === undefined)
             throw new IllegalStateException("no file is loaded");
 
@@ -421,8 +434,6 @@ export class FileProcessor {
         if(frame.data.byteLength > 2**32)
             throw new FileContentsException("data of addendum must be <= 2^32 bytes");
 
-        const oldPos = data.position();
-
         data.writeUint8Array(frame.prevFrameHash);
         data.writeUIntBE(frame.timestamp, TIMESTAMP_BYTES);
         data.writeUInt16BE(this.authors!.indexOf(frame.author));
@@ -430,21 +441,17 @@ export class FileProcessor {
         data.writeStringUtf8(frame.type);
         data.writeUInt32BE(frame.data.byteLength);
         data.writeUint8Array(frame.data);
-
-        data.writeUint8Array(await this.hashFrame(data, oldPos));
+        data.writeUint8Array(frame.hash);
     }
 
     private async writeVoteFrame(data: BufferWriter, frame: Vote) {
-        const oldPos = data.position();
-
         data.writeUint8Array(frame.prevFrameHash);
         data.writeUIntBE(frame.timestamp, TIMESTAMP_BYTES);
         data.writeUInt16BE(this.authors!.indexOf(frame.author));
         data.writeUint8Array(frame.targetAddendumHash);
         data.writeInt8(frame.vote ? 1 : 0);
-
-        data.writeUint8Array(await this.hashFrame(data, oldPos));
-        data.writeUint8Array(await this.sign(data, oldPos, data.position() - Bill.HASH_BYTES));
+        data.writeUint8Array(frame.hash);
+        data.writeUint8Array(frame.signature);
     }
     //endregion
 
