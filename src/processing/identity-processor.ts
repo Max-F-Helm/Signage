@@ -18,6 +18,8 @@ export default class IdentityProcessor {
     static async createIdentity(name: string, mail: string, keypair: Keypair | null): Promise<Identity> {
         if(keypair === null)
             keypair = await Bill.gen_ecc_keypair();
+        else if(keypair.privateKey === null)
+            throw new IllegalArgumentException("keypair must have private key");
 
         return {
             name: name,
