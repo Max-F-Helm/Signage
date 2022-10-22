@@ -65,10 +65,16 @@ export default [
         const buffer = new BufferWriter();
         await IdentityProcessor.saveAuthor(buffer, author);
 
+        // corrupt data
+        buffer.setPositionAbs(2);
+        buffer.writeInt8(2);
+
+        let ranThrough = false;
         try {
             await IdentityProcessor.loadAuthor(new BufferReader(buffer.take()));
-
-            should(false).true("should have thrown an exception");
+            ranThrough = true;
         } catch (e) {}
+
+        should(ranThrough).false("should have thrown an exception");
     })
 ];
