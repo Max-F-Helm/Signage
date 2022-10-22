@@ -1,13 +1,11 @@
 import type BufferReader from "@/processing/buffer-reader";
-import type BufferWriter from "@/processing/buffer-writer";
+import BufferWriter from "@/processing/buffer-writer";
 import type {Keypair} from "@/processing/bill";
 import Bill from "@/processing/bill";
 import deepEqual from "fast-deep-equal";
 import type Author from "@/processing/model/Author";
-import {Buffer} from "buffer";
-
-const INVALID_SIGNATURE = Buffer.alloc(Bill.ECC_SIGNATURE_BYTES, 0xFF);
-const INVALID_PRIVATE_KEY = Buffer.alloc(Bill.ECC_PRIVATE_KEY_BYTES, 0xFF);
+import {hashFrame, signFrame} from "@/processing/utils";
+import {FileContentsException, IllegalArgumentException} from "@/processing/exceptions";
 
 export interface Identity {
     name: string,
@@ -32,10 +30,7 @@ export default class IdentityProcessor {
         const name = data.readStringUtf8();
         const mail = data.readStringUtf8();
         const publicKey = data.readUint8Array(Bill.ECC_PUBLIC_KEY_BYTES);
-        let privateKey: Uint8Array | null = data.readUint8Array(Bill.ECC_PRIVATE_KEY_BYTES);
-
-        if(deepEqual(privateKey, INVALID_PRIVATE_KEY))
-            privateKey = null;
+        let privateKey: Uint8Array = data.readUint8Array(Bill.ECC_PRIVATE_KEY_BYTES);
 
         return {
             name: name,
@@ -48,14 +43,66 @@ export default class IdentityProcessor {
     }
 
     static async saveIdentity(data: BufferWriter, identity: Identity) {
+        if(identity.keypair.privateKey === null)
+            throw new IllegalArgumentException("identity must have a private key");
+
         data.writeStringUtf8(identity.name);
         data.writeStringUtf8(identity.mail);
         data.writeUint8Array(identity.keypair.publicKey);
+        data.writeUint8Array(identity.keypair.privateKey);
+    }
 
-        if(identity.keypair.privateKey !== null)
-            data.writeUint8Array(identity.keypair.privateKey);
-        else
-            data.writeUint8Array(INVALID_PRIVATE_KEY);
+    static async loadAuthor(data: BufferReader): Promise<Author> {
+        const oldPos = data.position();
+        const name = data.readStringUtf8();
+        const mail = data.readStringUtf8();
+        const publicKey = data.readUint8Array(Bill.ECC_PUBLIC_KEY_BYTES);
+        const signCount = data.readUInt32BE();
+
+        const hash = await hashFrame(data, oldPos);
+
+        const signature = data.readUint8Array(Bill.ECC_SIGNATURE_BYTES);
+
+        const kp: Keypair = {
+            publicKey: publicKey,
+            privateKey: null
+        }
+        const signatureValid = await Bill.verify_data(hash, signature, kp);
+
+        if(!signatureValid)
+            throw new FileContentsException(`signature for author ${name} is invalid`);
+
+        return {
+            name: name,
+            mail: mail,
+            keypair: kp,
+            signCount: signCount,
+            signature: signature
+        };
+    }
+
+    static async saveAuthor(data: BufferWriter, author: Author) {
+        data.writeStringUtf8(author.name);
+        data.writeStringUtf8(author.mail);
+        data.writeUint8Array(author.keypair.publicKey);
+        data.writeUInt32BE(author.signCount);
+        data.writeUint8Array(author.signature);
+    }
+
+    static async signAndSaveAuthor(data: BufferWriter, author: Author) {
+        if(author.keypair.privateKey === null)
+            throw new IllegalArgumentException("identity has no private key");
+
+        const oldPos = data.position();
+
+        data.writeStringUtf8(author.name);
+        data.writeStringUtf8(author.mail);
+        data.writeUint8Array(author.keypair.publicKey);
+        data.writeUInt32BE(author.signCount);
+
+        author.signature = await signFrame(author, data, oldPos);
+
+        data.writeUint8Array(author.signature);
     }
 
     static equals(a: Identity, b: Identity) {
@@ -64,13 +111,21 @@ export default class IdentityProcessor {
             && deepEqual(a.keypair.publicKey, b.keypair.publicKey);
     }
 
-    static toAuthor(identity: Identity): Author {
+    static async toAuthor(identity: Identity): Promise<Author> {
+        const hashBuffer = new BufferWriter();
+        hashBuffer.writeStringUtf8(identity.name);
+        hashBuffer.writeStringUtf8(identity.mail);
+        hashBuffer.writeUint8Array(identity.keypair.publicKey);
+        hashBuffer.writeUInt32BE(0);
+
+        const signature = await signFrame(identity, hashBuffer, 0);
+
         return {
             name: identity.name,
             mail: identity.mail,
             keypair: identity.keypair,
             signCount: 0,
-            signature: INVALID_SIGNATURE
+            signature: signature
         };
     }
 }

@@ -3,7 +3,7 @@ import deepEqual from "fast-deep-equal";
 import BufferReader from "./buffer-reader";
 import BufferWriter from "./buffer-writer";
 import {FileContentsException, IllegalArgumentException, IllegalStateException} from "./exceptions";
-import Bill, {type Keypair} from "./bill";
+import Bill from "./bill";
 import type Frame from "./model/Frame";
 import {FrameType} from "./model/Frame";
 import type Author from "./model/Author";
@@ -11,6 +11,7 @@ import type Addendum from "./model/Addendum";
 import type Vote from "./model/Vote";
 import type {Identity} from "@/processing/identity-processor";
 import IdentityProcessor from "@/processing/identity-processor";
+import {hashFrame, isUint8ArrayArrUnique, signFrame} from "@/processing/utils";
 
 const FILE_SPEC_VERSION = 1;
 const FRAME_TYPE_ADDENDUM = 1;
@@ -58,7 +59,7 @@ export class FileProcessor {
         if(this.identity === null)
             throw new IllegalStateException("no identity was set");
 
-        const author = IdentityProcessor.toAuthor(this.identity);
+        const author = await IdentityProcessor.toAuthor(this.identity);
         if(!authors.some(a => IdentityProcessor.equals(a, author)))
             throw new IllegalArgumentException("set identity must be part of authors");
 
@@ -124,47 +125,22 @@ export class FileProcessor {
         const authors = [] as Author[];
 
         for(let i = 0; i < authorCount; i++){
-            const author = await this.loadAuthor(data);
-            if(author != null) {
+            try {
+                const author = await IdentityProcessor.loadAuthor(data);
                 authors.push(author);
 
-                if(this.identity !== null)
-                    if(IdentityProcessor.equals(author, this.identity))
+                if(this.identity !== null) {
+                    if(IdentityProcessor.equals(author, this.identity)) {
+                        author.keypair.privateKey = this.identity.keypair.privateKey;
                         this.author = author;
+                    }
+                }
+            } catch(e) {
+                this.errorCallback(`invalid author (${e}); dropping`);
             }
         }
 
         return authors;
-    }
-
-    private async loadAuthor(data: BufferReader): Promise<Author | null> {
-        const oldPos = data.position();
-        const name = data.readStringUtf8();
-        const mail = data.readStringUtf8();
-        const publicKey = data.readUint8Array(Bill.ECC_PUBLIC_KEY_BYTES);
-        const signCount = data.readUInt32BE();
-
-        const hash = await this.hashFrame(data, oldPos);
-
-        const signature = data.readUint8Array(Bill.ECC_SIGNATURE_BYTES);
-
-        const kp: Keypair = {
-            publicKey: publicKey,
-            privateKey: null
-        }
-        const signatureValid = await Bill.verify_data(hash, signature, kp);
-
-        if(!signatureValid) {
-            this.errorCallback(`signature for author ${name} is invalid`);
-        }
-
-        return {
-            name: name,
-            mail: mail,
-            keypair: kp,
-            signCount: signCount,
-            signature: signature
-        };
     }
 
     private async loadFrames(data: BufferReader): Promise<Frame[]> {
@@ -198,7 +174,7 @@ export class FileProcessor {
         const dataLength = data.readUInt32BE();
         const addendumData = data.readUint8Array(dataLength);
 
-        const actualHash = await this.hashFrame(data, oldPos);
+        const actualHash = await hashFrame(data, oldPos);
 
         const hash = data.readUint8Array(Bill.HASH_BYTES);
         if(!deepEqual(actualHash, hash)) {
@@ -232,7 +208,7 @@ export class FileProcessor {
         const targetAddendumHash = data.readUint8Array(Bill.HASH_BYTES);
         const vote = data.readUInt8() === 1;
 
-        const actualHash = await this.hashFrame(data, oldPos);
+        const actualHash = await hashFrame(data, oldPos);
 
         const hash = data.readUint8Array(Bill.HASH_BYTES);
         if(!deepEqual(actualHash, hash)) {
@@ -396,23 +372,13 @@ export class FileProcessor {
         const authors = this.authors!;
         data.writeUInt16BE(authors.length);
 
-        for(const author of authors)
-            await this.writeAuthor(data, author);
-    }
-
-    private async writeAuthor(data: BufferWriter, author: Author) {
-        const oldPos = data.position();
-
-        data.writeStringUtf8(author.name);
-        data.writeStringUtf8(author.mail);
-        data.writeUint8Array(author.keypair.publicKey);
-        data.writeUInt32BE(author.signCount);
-
-        if(IdentityProcessor.equals(author, this.author!)) {
-            author.signature = await this.sign(data, oldPos);
+        for(const author of authors) {
+            if(IdentityProcessor.equals(author, this.author!)) {
+                await IdentityProcessor.signAndSaveAuthor(data, author);
+            } else {
+                await IdentityProcessor.saveAuthor(data, author);
+            }
         }
-
-        data.writeUint8Array(author.signature);
     }
 
     private async writeFrames(data: BufferWriter) {
@@ -474,16 +440,3 @@ export class FileProcessor {
     }
     //region utils
 }
-
-//region utils
-function isUint8ArrayArrUnique(arr: Uint8Array[]): boolean {
-    for(let i = 0; i < arr.length; i++) {
-        for(let j = i + 1; j < arr.length; j++) {
-            if(deepEqual(arr[i], arr[j])) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-//endregion
