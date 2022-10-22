@@ -202,10 +202,7 @@ export class FileProcessor {
         const dataLength = this.data.readUInt32BE();
         const data = this.data.readUint8Array(dataLength);
 
-        const readLength = this.data.position() - oldPos;
-        this.data.setPositionAbs(oldPos);
-        const toHash = this.data.readUint8Array(readLength);
-        const actualHash = await Bill.hash(toHash);
+        const actualHash = await this.hashFrame(this.data, oldPos);
 
         const hash = this.data.readUint8Array(Bill.HASH_BYTES);
         if(!deepEqual(actualHash, hash)) {
@@ -243,10 +240,7 @@ export class FileProcessor {
         const targetAddendumHash = this.data.readUint8Array(Bill.HASH_BYTES);
         const vote = this.data.readUInt8() === 1;
 
-        const readLength = this.data.position() - oldPos;
-        this.data.setPositionAbs(oldPos);
-        const toHash = this.data.readUint8Array(readLength);
-        const actualHash = await Bill.hash(toHash);
+        const actualHash = await this.hashFrame(this.data, oldPos);
 
         const hash = this.data.readUint8Array(Bill.HASH_BYTES);
         if(!deepEqual(actualHash, hash)) {
@@ -472,7 +466,8 @@ export class FileProcessor {
     }
     //endregion
 
-    private async hashFrame(data: BufferWriter, frameStart: number, frameEnd: number = -1): Promise<Uint8Array> {
+    //region utils
+    private async hashFrame(data: BufferWriter | BufferReader, frameStart: number, frameEnd: number = -1): Promise<Uint8Array> {
         if(frameEnd === -1)
             frameEnd = data.position();
 
@@ -488,6 +483,7 @@ export class FileProcessor {
         const hash = await this.hashFrame(data, frameStart, frameEnd);
         return await Bill.sign_data(hash, this.author!.keypair);
     }
+    //region utils
 }
 
 //region utils
