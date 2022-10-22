@@ -464,6 +464,9 @@ export class FileProcessor {
 
         this.frames.push(frame);
         this.addedFrames.push(frame);
+
+        // add mandatory vote
+        await this.addVote(true);
     }
 
     async addVote(vote: boolean) {
