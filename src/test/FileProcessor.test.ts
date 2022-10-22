@@ -132,9 +132,55 @@ export default [
         await shouldThrow("double-vote should be forbidden", async () => {
             await processor.addVote(true);
         });
-    })
+    }),
 
-    //TODO patches
+    describe("FileProcessor::patch", async () => {
+        //region init
+        const errorCallback = (msg: string) => {
+            should(false).true("error was reported: " + msg);
+        };
+
+        const identity = await IdentityProcessor.createIdentity("a", "b", null);
+        const authors = [await IdentityProcessor.toAuthor(identity)];
+
+        const processor = new FileProcessor(identity, false, errorCallback);
+
+        await processor.createFile(authors);
+        //endregion
+
+        //region add content 1
+        const addendumContent = Buffer.alloc(8, 5);
+        const addendumTitle = "_title_";
+        const addendumMime = "application/pdf";
+
+        await processor.addAddendum(addendumTitle, addendumMime, addendumContent);
+        //endregion
+
+        //region save 1
+        const save1 = await processor.saveFile(null);
+        processor.clearChanges();
+        //endregion
+
+        //region add content 2
+        await processor.addAddendum(addendumTitle + "-2", addendumMime, addendumContent);
+        //endregion
+
+        //region save patch and save 2
+        const save2 = await processor.saveFile(null);
+        const patch = await processor.exportChanges();
+        //endregion
+
+        //region load and compare
+        await processor.loadFile(new BufferReader(save1), null);
+        await processor.importPatchSet(new BufferReader(patch));
+        const actual = processor.getProposal();
+
+        await processor.loadFile(new BufferReader(save2), null);
+        const expected = processor.getProposal();
+
+        should(deepEqual(actual, expected)).true("contents did not match");
+        //endregion
+    })
 ];
 
 async function generateAuthors() {
