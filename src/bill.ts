@@ -57,4 +57,8 @@ export default class Bill {
     static async decrypt(data: Uint8Array, key: Uint8Array): Promise<Uint8Array> {
         return libsodium.crypto_secretbox_open_easy(data, CIPHER_NONCE, key);
     }
+
+    static async random_bytes(length: number): Promise<Uint8Array> {
+        return libsodium.randombytes_buf(length);
+    }
 }

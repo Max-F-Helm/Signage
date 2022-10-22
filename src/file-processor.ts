@@ -56,6 +56,14 @@ export class FileProcessor {
         return this.frames;
     }
 
+    //region create file
+    async createFile(authors: Author[]) {
+        this.authors = authors;
+        this.frames = [];
+        this.genesisValue = await Bill.random_bytes(Bill.HASH_BYTES);
+    }
+    //endregion
+
     //region load file
     async loadFile(data: BufferReader, key: Uint8Array | null) {
         if(this.encryptFile){
