@@ -28,6 +28,7 @@ export default [
         await processor.createFile(authors);
 
         await processor.addAddendum(addendumTitle, addendumMime, addendumContent);
+
         const proposalA = processor.getProposal();
         const saved = await processor.saveFile(null);
 
@@ -108,6 +109,30 @@ export default [
             await processor2.loadFile(new BufferReader(saved), null);
         });
     }),
+
+    describe("FileProcessor::no_double_votes", async () => {
+        const errorCallback = (msg: string) => {
+            should(false).true("error was reported: " + msg);
+        };
+
+        const identity = await IdentityProcessor.createIdentity("a", "b", null);
+        const authors = [await IdentityProcessor.toAuthor(identity)];
+
+        const processor = new FileProcessor(identity, false, errorCallback);
+        authors.push(authors[0]);
+
+        const addendumContent = Buffer.alloc(8, 5);
+        const addendumTitle = "_title_";
+        const addendumMime = "application/pdf";
+
+        await processor.createFile(authors);
+
+        await processor.addAddendum(addendumTitle, addendumMime, addendumContent);
+
+        await shouldThrow("double-vote should be forbidden", async () => {
+            await processor.addVote(true);
+        });
+    })
 
     //TODO patches
 ];

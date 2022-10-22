@@ -11,7 +11,7 @@ import type Addendum from "./model/Addendum";
 import type Vote from "./model/Vote";
 import type {Identity} from "@/processing/identity-processor";
 import IdentityProcessor from "@/processing/identity-processor";
-import {hashFrame, isUint8ArrayArrUnique, signFrame} from "@/processing/utils";
+import {hashFrame, isUint8ArrayArrUnique} from "@/processing/utils";
 
 const FILE_SPEC_VERSION = 1;
 const FRAME_TYPE_ADDENDUM = 1;
@@ -61,8 +61,8 @@ export class FileProcessor {
         if(this.identity === null)
             throw new IllegalStateException("no identity was set");
 
-        const author = await IdentityProcessor.toAuthor(this.identity);
-        if(!authors.some(a => IdentityProcessor.equals(a, author)))
+        const author = authors.find(a => IdentityProcessor.equals(a, this.identity!));
+        if(author === undefined)
             throw new IllegalArgumentException("set identity must be part of authors");
 
         this.authors = authors;
@@ -258,6 +258,8 @@ export class FileProcessor {
             this.errorCallback("some votes has invalid targets");
         if(!this.checkAllAddendiVoted(frames))
             this.errorCallback("not all addendi were voted");
+        if(!this.checkNoDoubleVotes(frames))
+            this.errorCallback("chain contains multiple votes for one addendum from one author");
         if(!this.checkAuthorSignCount(frames))
             this.errorCallback("author sign-count does not match");
     }
@@ -334,6 +336,20 @@ export class FileProcessor {
         return true;
     }
 
+    private checkNoDoubleVotes(chain: Frame[]): boolean {
+        const votes = chain.filter(f => f.frameType === FrameType.Vote).map(f => f as Vote);
+        for(let i = 0; i < votes.length; i++) {
+            const v1 = votes[i]
+            for(let j = i + 1; j < votes.length; j++) {
+                const v2 = votes[j];
+                if(deepEqual(v1.targetAddendumHash, v2.targetAddendumHash)
+                    && deepEqual(v1.author.keypair.publicKey, v2.author.keypair.publicKey))
+                    return false;
+            }
+        }
+        return true;
+    }
+
     private checkAuthorSignCount(chain: Frame[]): boolean {
         const signCounts = new Map<Author, number>();
 
@@ -385,7 +401,6 @@ export class FileProcessor {
             if(IdentityProcessor.equals(author, this.author!)) {
                 author.signCount = this.author!.signCount;
                 await IdentityProcessor.signAndSaveAuthor(data, author);
-                this.author!.signature = author.signature;// sync so that tests work
             } else {
                 await IdentityProcessor.saveAuthor(data, author);
             }
@@ -501,6 +516,9 @@ export class FileProcessor {
         if(lastAddendumHash === null)
             throw new IllegalStateException("no addendum exist");
 
+        if(this.checkAlreadyVoted(lastAddendumHash))
+            throw new IllegalStateException("already voted");
+
         const hashBuffer = new BufferWriter();
         hashBuffer.writeUint8Array(prevFrameHash);
         hashBuffer.writeIntBE(timestamp, TIMESTAMP_BYTES);
@@ -526,6 +544,14 @@ export class FileProcessor {
 
         this.frames.push(frame);
         this.addedFrames.push(frame);
+    }
+
+    private checkAlreadyVoted(lastAddendumHash: Uint8Array): boolean {
+        return this.frames!
+            .filter(f => f.frameType === FrameType.Vote)
+            .map(f => f as Vote)
+            .filter(v => deepEqual(v.targetAddendumHash, lastAddendumHash))
+            .some(v => deepEqual(v.author, this.author!));
     }
     //endregion
 
