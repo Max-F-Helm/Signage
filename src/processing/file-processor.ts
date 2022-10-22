@@ -25,6 +25,11 @@ interface GenesisDummyFrame extends Frame {}
 
 export type ErrorCallback = (msg: string) => void;
 
+export interface Proposal {
+    authors: Author[],
+    frames: Frame[]
+}
+
 export class FileProcessor {
 
     private readonly encryptFile: boolean;
@@ -44,16 +49,14 @@ export class FileProcessor {
         this.author = author;
     }
 
-    getAuthors(): Author[] {
-        if(this.authors === undefined)
+    getProposal(): Proposal {
+        if(this.authors === undefined || this.frames === undefined)
             throw new IllegalStateException("no file is loaded");
-        return this.authors;
-    }
 
-    getFrames(): Frame[] {
-        if(this.frames === undefined)
-            throw new IllegalStateException("no file is loaded");
-        return this.frames;
+        return {
+            authors: this.authors,
+            frames: this.frames
+        };
     }
 
     //region create file
