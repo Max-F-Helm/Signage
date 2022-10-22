@@ -29,7 +29,6 @@ export class FileProcessor {
     private readonly encryptFile: boolean;
     private readonly errorCallback: ErrorCallback;
     private author: Author | null = null;
-    private data: BufferReader | undefined;
 
     private authors: Author[] | undefined;
     private frames: Frame[] | undefined;
@@ -69,26 +68,22 @@ export class FileProcessor {
         if(this.encryptFile){
             if(key === null)
                 throw new IllegalArgumentException("key must be provided if encryptFile is enabled");
-            this.data = await this.decryptData(data, key);
-        }else {
-            this.data = data;
+            data = await this.decryptData(data, key);
         }
 
-        this.readAndCheckFileVersion();
-        this.authors = await this.loadAuthors();
+        this.readAndCheckFileVersion(data);
+        this.authors = await this.loadAuthors(data);
         this.checkLocalAuthorExists();
 
-        this.genesisValue = this.data.readUint8Array(Bill.HASH_BYTES);
+        this.genesisValue = data.readUint8Array(Bill.HASH_BYTES);
 
-        const loadedFrames = await this.loadFrames();
+        const loadedFrames = await this.loadFrames(data);
         const genesisFrame = {frame: {} as GenesisDummyFrame, hash: this.genesisValue};
         loadedFrames.push(genesisFrame);
         this.checkChainIntegrity(loadedFrames);
 
         loadedFrames.splice(loadedFrames.indexOf(genesisFrame), 1);
         this.frames = loadedFrames.map(f => f.frame);
-
-        this.data = undefined;
     }
 
     private async decryptData(data: BufferReader, key: Uint8Array): Promise<BufferReader> {
@@ -100,24 +95,18 @@ export class FileProcessor {
         return decryptedReader;
     }
 
-    private readAndCheckFileVersion() {
-        if(this.data === undefined)
-            throw new Error();
-
-        const ver = this.data.readUInt8();
+    private readAndCheckFileVersion(data: BufferReader) {
+        const ver = data.readUInt8();
         if(ver != FILE_SPEC_VERSION)
             throw new FileContentsException("file has unsupported version");
     }
 
-    private async loadAuthors(): Promise<Author[]> {
-        if(this.data === undefined)
-            throw new Error();
-
-        const authorCount = this.data.readUInt16BE();
+    private async loadAuthors(data: BufferReader): Promise<Author[]> {
+        const authorCount = data.readUInt16BE();
         const authors = [] as Author[];
 
         for(let i = 0; i < authorCount; i++){
-            const author = await this.loadAuthor();
+            const author = await this.loadAuthor(data);
             if(author != null)
                 authors.push(author);
         }
@@ -125,22 +114,16 @@ export class FileProcessor {
         return authors;
     }
 
-    private async loadAuthor(): Promise<Author | null> {
-        if(this.data === undefined)
-            throw new Error();
+    private async loadAuthor(data: BufferReader): Promise<Author | null> {
+        const oldPos = data.position();
+        const name = data.readStringUtf8();
+        const mail = data.readStringUtf8();
+        const publicKey = data.readUint8Array(Bill.ECC_PUBLIC_KEY_BYTES);
+        const signCount = data.readUInt32BE();
 
-        const oldPos = this.data.position();
-        const name = this.data.readStringUtf8();
-        const mail = this.data.readStringUtf8();
-        const publicKey = this.data.readUint8Array(Bill.ECC_PUBLIC_KEY_BYTES);
-        const signCount = this.data.readUInt32BE();
+        const hash = await this.hashFrame(data, oldPos);
 
-        const readLength = this.data.position() - oldPos;
-        this.data.setPositionAbs(oldPos);
-        const toHash = this.data.readUint8Array(readLength);
-        const hash = await Bill.hash(toHash);
-
-        const signature = this.data.readUint8Array(Bill.ECC_SIGNATURE_BYTES);
+        const signature = data.readUint8Array(Bill.ECC_SIGNATURE_BYTES);
 
         const kp: Keypair = {
             publicKey: publicKey,
@@ -174,20 +157,17 @@ export class FileProcessor {
         }
     }
 
-    private async loadFrames(): Promise<FrameWithHash[]> {
-        if(this.data === undefined)
-            throw new Error();
-
+    private async loadFrames(data: BufferReader): Promise<FrameWithHash[]> {
         const frames = [] as FrameWithHash[];
-        while(!this.data.isAtEnd()) {
+        while(!data.isAtEnd()) {
             let frame: FrameWithHash | null = null;
-            const type = this.data.readUInt8();
+            const type = data.readUInt8();
             switch (type){
                 case FRAME_TYPE_ADDENDUM:
-                    frame = await this.loadAddendumFrame();
+                    frame = await this.loadAddendumFrame(data);
                     break;
                 case FRAME_TYPE_VOTE:
-                    frame = await this.loadVoteFrame();
+                    frame = await this.loadVoteFrame(data);
                     break;
                 default:
                     throw new FileContentsException("invalid frame-type");
@@ -198,21 +178,18 @@ export class FileProcessor {
         return frames;
     }
 
-    private async loadAddendumFrame(): Promise<FrameWithHash | null> {
-        if(this.data === undefined)
-            throw new Error();
+    private async loadAddendumFrame(data: BufferReader): Promise<FrameWithHash | null> {
+        const oldPos = data.position();
+        const prevFrameHash = data.readUint8Array(Bill.HASH_BYTES);
+        const timestamp = data.readIntBE(TIMESTAMP_BYTES);
+        const authorRef = data.readUInt16BE();
+        const mime = data.readStringUtf8();
+        const dataLength = data.readUInt32BE();
+        const addendumData = data.readUint8Array(dataLength);
 
-        const oldPos = this.data.position();
-        const prevFrameHash = this.data.readUint8Array(Bill.HASH_BYTES);
-        const timestamp = this.data.readIntBE(TIMESTAMP_BYTES);
-        const authorRef = this.data.readUInt16BE();
-        const mime = this.data.readStringUtf8();
-        const dataLength = this.data.readUInt32BE();
-        const data = this.data.readUint8Array(dataLength);
+        const actualHash = await this.hashFrame(data, oldPos);
 
-        const actualHash = await this.hashFrame(this.data, oldPos);
-
-        const hash = this.data.readUint8Array(Bill.HASH_BYTES);
+        const hash = data.readUint8Array(Bill.HASH_BYTES);
         if(!deepEqual(actualHash, hash)) {
             this.errorCallback("a frame has an invalid hash; dropping");
             return null;
@@ -231,26 +208,23 @@ export class FileProcessor {
                 timestamp: timestamp,
                 author: author,
                 type: mime,
-                data: data
+                data: addendumData
             } as Addendum,
             hash: hash
         };
     }
 
-    private async loadVoteFrame(): Promise<FrameWithHash | null> {
-        if(this.data === undefined)
-            throw new Error();
+    private async loadVoteFrame(data: BufferReader): Promise<FrameWithHash | null> {
+        const oldPos = data.position();
+        const prevFrameHash = data.readUint8Array(Bill.HASH_BYTES);
+        const timestamp = data.readIntBE(TIMESTAMP_BYTES);
+        const authorRef = data.readUInt16BE();
+        const targetAddendumHash = data.readUint8Array(Bill.HASH_BYTES);
+        const vote = data.readUInt8() === 1;
 
-        const oldPos = this.data.position();
-        const prevFrameHash = this.data.readUint8Array(Bill.HASH_BYTES);
-        const timestamp = this.data.readIntBE(TIMESTAMP_BYTES);
-        const authorRef = this.data.readUInt16BE();
-        const targetAddendumHash = this.data.readUint8Array(Bill.HASH_BYTES);
-        const vote = this.data.readUInt8() === 1;
+        const actualHash = await this.hashFrame(data, oldPos);
 
-        const actualHash = await this.hashFrame(this.data, oldPos);
-
-        const hash = this.data.readUint8Array(Bill.HASH_BYTES);
+        const hash = data.readUint8Array(Bill.HASH_BYTES);
         if(!deepEqual(actualHash, hash)) {
             this.errorCallback("a frame has an invalid hash; dropping");
             return null;
@@ -262,7 +236,7 @@ export class FileProcessor {
             return null;
         }
 
-        const signature = this.data.readUint8Array(Bill.ECC_SIGNATURE_BYTES);
+        const signature = data.readUint8Array(Bill.ECC_SIGNATURE_BYTES);
         const signatureValid = await Bill.verify_data(hash, signature, author.keypair);
 
         if(!signatureValid) {
