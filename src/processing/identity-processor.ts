@@ -3,7 +3,11 @@ import type BufferWriter from "@/processing/buffer-writer";
 import type {Keypair} from "@/processing/bill";
 import Bill from "@/processing/bill";
 import deepEqual from "fast-deep-equal";
-import {IllegalArgumentException} from "@/processing/exceptions";
+import type Author from "@/processing/model/Author";
+import {Buffer} from "buffer";
+
+const INVALID_SIGNATURE = Buffer.alloc(Bill.ECC_SIGNATURE_BYTES, 0xFF);
+const INVALID_PRIVATE_KEY = Buffer.alloc(Bill.ECC_PRIVATE_KEY_BYTES, 0xFF);
 
 export interface Identity {
     name: string,
@@ -25,24 +29,33 @@ export default class IdentityProcessor {
     }
 
     static async loadIdentity(data: BufferReader): Promise<Identity> {
+        const name = data.readStringUtf8();
+        const mail = data.readStringUtf8();
+        const publicKey = data.readUint8Array(Bill.ECC_PUBLIC_KEY_BYTES);
+        let privateKey: Uint8Array | null = data.readUint8Array(Bill.ECC_PRIVATE_KEY_BYTES);
+
+        if(deepEqual(privateKey, INVALID_PRIVATE_KEY))
+            privateKey = null;
+
         return {
-            name: data.readStringUtf8(),
-            mail: data.readStringUtf8(),
+            name: name,
+            mail: mail,
             keypair: {
-                publicKey: data.readUint8Array(Bill.ECC_PUBLIC_KEY_BYTES),
-                privateKey: data.readUint8Array(Bill.ECC_PRIVATE_KEY_BYTES)
+                publicKey: publicKey,
+                privateKey: privateKey
             }
         };
     }
 
     static async saveIdentity(data: BufferWriter, identity: Identity) {
-        if(identity.keypair.privateKey === null)
-            throw new IllegalArgumentException("identity must have private key");
-
         data.writeStringUtf8(identity.name);
         data.writeStringUtf8(identity.mail);
         data.writeUint8Array(identity.keypair.publicKey);
-        data.writeUint8Array(identity.keypair.privateKey);
+
+        if(identity.keypair.privateKey !== null)
+            data.writeUint8Array(identity.keypair.privateKey);
+        else
+            data.writeUint8Array(INVALID_PRIVATE_KEY);
     }
 
     static equals(a: Identity, b: Identity) {
