@@ -7,9 +7,8 @@ const tests = [
 ];
 
 export default function runTests() {
-    new Promise(() => {
-        tests.forEach(async (t) => {
-            await t();
-        });
+    new Promise(async () => {
+        for(const test of tests)
+            await test();
     }).then();
 }

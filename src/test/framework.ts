@@ -5,13 +5,19 @@ export function describe(desc: string, exec: () => Promise<void>): () => Promise
             await exec();
             console.info("test successful");
         } catch (e) {
-            console.error(`test failed\n
+            if(e.hasOwnProperty("stack")){
+                // assertion error
+                console.error(`test failed (assertion failed)\n
 message: ${e.message}
 operator: ${e.operator}
 expected: ${e.expected}
 actual: ${e.actual}
 file: ${extractTestLocation(e.stack)}
             `.trim());
+            } else {
+                // general exception
+                console.error("test failed (threw exception)", e);
+            }
         }
     }
 }
