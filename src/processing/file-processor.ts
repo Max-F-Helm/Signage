@@ -180,6 +180,7 @@ export class FileProcessor {
         const prevFrameHash = data.readUint8Array(Bill.HASH_BYTES);
         const timestamp = data.readIntBE(TIMESTAMP_BYTES);
         const authorRef = data.readUInt16BE();
+        const title = data.readStringUtf8();
         const mime = data.readStringUtf8();
         const dataLength = data.readUInt32BE();
         const addendumData = data.readUint8Array(dataLength);
@@ -204,6 +205,7 @@ export class FileProcessor {
                 prevFrameHash: prevFrameHash,
                 timestamp: timestamp,
                 author: author,
+                title: title,
                 type: mime,
                 data: addendumData
             } as Addendum,
@@ -424,6 +426,7 @@ export class FileProcessor {
         data.writeUint8Array(frame.prevFrameHash);
         data.writeUIntBE(frame.timestamp, TIMESTAMP_BYTES);
         data.writeUInt16BE(this.authors!.indexOf(frame.author));
+        data.writeStringUtf8(frame.title);
         data.writeStringUtf8(frame.type);
         data.writeUInt32BE(frame.data.byteLength);
         data.writeUint8Array(frame.data);
