@@ -2,10 +2,10 @@
   <main>
     <Toolbar>
       <template #start>
-        <MyButton label="Vote für letzten Vorschlag" icon="pi pi-check" @click="loadLatestDocument" class="p-button-success" />
+        <MyButton label="Vote für letzten Vorschlag" icon="pi pi-check" @click="" class="p-button-success" />
       </template>
       <template #end>
-        <MyButton label="Patchset importieren" icon="pi pi-upload" @click="loadLatestDocument" />
+        <MyButton label="Patchset importieren" icon="pi pi-upload" @click="importPatchSet" />
       </template>
     </Toolbar>
   </main>
@@ -14,6 +14,7 @@
 <script>
 import MyButton from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
+import Modal from './Modal.vue';
 export default {
   name: "StartPage",
   components:{
@@ -23,7 +24,11 @@ export default {
   data() {
     return {}
   },
-  methods: {}
+  methods: {
+    importPatchSet() {
+
+    }
+  }
 }
 </script>
 
