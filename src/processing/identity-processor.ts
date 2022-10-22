@@ -63,4 +63,14 @@ export default class IdentityProcessor {
             && a.mail === b.mail
             && deepEqual(a.keypair.publicKey, b.keypair.publicKey);
     }
+
+    static toAuthor(identity: Identity): Author {
+        return {
+            name: identity.name,
+            mail: identity.mail,
+            keypair: identity.keypair,
+            signCount: 0,
+            signature: INVALID_SIGNATURE
+        };
+    }
 }
