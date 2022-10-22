@@ -17,3 +17,7 @@ app.use(router);
 app.use(PrimeVue);
 
 app.mount('#app');
+
+import runTests from "@/test/runner";
+// @ts-ignore
+window.runTests = runTests;
