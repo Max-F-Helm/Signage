@@ -1,9 +1,6 @@
-import type {Keypair} from "@/bill";
+import type {Identity} from "@/processing/identity-processor";
 
-export default interface Author {
-    name: string,
-    mail: string,
-    keypair: Keypair,
+export default interface Author extends Identity{
     signCount: number,
     signature: Uint8Array
 }

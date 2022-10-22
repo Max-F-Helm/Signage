@@ -9,6 +9,7 @@ import {FrameType} from "./model/Frame";
 import type Author from "./model/Author";
 import type Addendum from "./model/Addendum";
 import type Vote from "./model/Vote";
+import IdentityProcessor from "@/processing/identity-processor";
 
 const FILE_SPEC_VERSION = 1;
 const FRAME_TYPE_ADDENDUM = 1;
@@ -147,11 +148,7 @@ export class FileProcessor {
     private checkLocalAuthorExists() {
         if(this.author !== null) {
             const author = this.author;
-            if(!this.authors!.some(a => {
-                a.name === author.name
-                && a.mail === author.mail
-                && deepEqual(a.keypair.publicKey, author.keypair.publicKey)
-            })) {
+            if(!this.authors!.some(a => IdentityProcessor.equals(a, author))) {
                 this.errorCallback("local author is not in the list of authors");
             }
         }
@@ -396,7 +393,7 @@ export class FileProcessor {
         data.writeUint8Array(author.keypair.publicKey);
         data.writeUInt32BE(author.signCount);
 
-        if(deepEqual(author, this.author)) {
+        if(IdentityProcessor.equals(author, this.author!)) {
             author.signature = await this.sign(data, oldPos);
         }
 
