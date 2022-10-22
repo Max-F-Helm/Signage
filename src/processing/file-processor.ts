@@ -10,6 +10,7 @@ import type Author from "./model/Author";
 import type Addendum from "./model/Addendum";
 import type Vote from "./model/Vote";
 import IdentityProcessor from "@/processing/identity-processor";
+import type {Identity} from "@/processing/identity-processor";
 
 const FILE_SPEC_VERSION = 1;
 const FRAME_TYPE_ADDENDUM = 1;
@@ -34,19 +35,17 @@ export class FileProcessor {
 
     private readonly encryptFile: boolean;
     private readonly errorCallback: ErrorCallback;
-    private author: Author | null = null;
+    private readonly identity: Identity | null;
 
+    private author: Author | null = null;
     private authors: Author[] | undefined;
     private frames: Frame[] | undefined;
     private genesisValue: Uint8Array | undefined;
 
-    constructor(encryptFile: boolean, errorCallback: ErrorCallback) {
+    constructor(identity: Identity, encryptFile: boolean, errorCallback: ErrorCallback) {
+        this.identity = identity;
         this.encryptFile = encryptFile;
         this.errorCallback = errorCallback;
-    }
-
-    setAuthor(author: Author) {
-        this.author = author;
     }
 
     getProposal(): Proposal {
@@ -77,7 +76,9 @@ export class FileProcessor {
 
         this.readAndCheckFileVersion(data);
         this.authors = await this.loadAuthors(data);
-        this.checkLocalAuthorExists();
+
+        if(this.author === null)
+            this.errorCallback("local author is not in the list of authors");
 
         this.genesisValue = data.readUint8Array(Bill.HASH_BYTES);
 
@@ -111,8 +112,13 @@ export class FileProcessor {
 
         for(let i = 0; i < authorCount; i++){
             const author = await this.loadAuthor(data);
-            if(author != null)
+            if(author != null) {
                 authors.push(author);
+
+                if(this.identity !== null)
+                    if(IdentityProcessor.equals(author, this.identity))
+                        this.author = author;
+            }
         }
 
         return authors;
@@ -146,15 +152,6 @@ export class FileProcessor {
             signCount: signCount,
             signature: signature
         };
-    }
-
-    private checkLocalAuthorExists() {
-        if(this.author !== null) {
-            const author = this.author;
-            if(!this.authors!.some(a => IdentityProcessor.equals(a, author))) {
-                this.errorCallback("local author is not in the list of authors");
-            }
-        }
     }
 
     private async loadFrames(data: BufferReader): Promise<FrameWithHash[]> {
