@@ -32,7 +32,7 @@ export default class IdentityProcessor {
         const name = data.readStringUtf8();
         const mail = data.readStringUtf8();
         const publicKey = data.readUint8Array(Bill.ECC_PUBLIC_KEY_BYTES);
-        let privateKey: Uint8Array = data.readUint8Array(Bill.ECC_PRIVATE_KEY_BYTES);
+        const privateKey: Uint8Array = data.readUint8Array(Bill.ECC_PRIVATE_KEY_BYTES);
 
         return {
             name: name,

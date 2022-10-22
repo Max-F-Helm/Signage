@@ -11,6 +11,9 @@ import 'primevue/resources/themes/tailwind-light/theme.css';
 import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.scss';
 
+import Bill from "@/processing/bill";
+Bill.wait_for_init().then();
+
 const app = createApp(App);
 
 app.use(router);

@@ -12,13 +12,20 @@ export interface Keypair {
 
 export default class Bill {
 
-    static readonly ECC_PUBLIC_KEY_BYTES: number = libsodium.crypto_sign_PUBLICKEYBYTES;
-    static readonly ECC_PRIVATE_KEY_BYTES: number = libsodium.crypto_sign_SECRETKEYBYTES;
-    static readonly ECC_SIGNATURE_BYTES: number = libsodium.crypto_sign_BYTES;
-    static readonly HASH_BYTES = 256 / 8;
+    // do not modify
+    static ECC_PUBLIC_KEY_BYTES: number;
+    static ECC_PRIVATE_KEY_BYTES: number;
+    static ECC_SIGNATURE_BYTES: number;
+    static HASH_BYTES: number;
 
     static async wait_for_init(): Promise<null> {
         await libsodium.ready;
+
+        Bill.ECC_PUBLIC_KEY_BYTES = libsodium.crypto_sign_PUBLICKEYBYTES;
+        Bill.ECC_PRIVATE_KEY_BYTES = libsodium.crypto_sign_SECRETKEYBYTES;
+        Bill.ECC_SIGNATURE_BYTES = libsodium.crypto_sign_BYTES;
+        Bill.HASH_BYTES = 256 / 8;
+
         return null;
     }
 
