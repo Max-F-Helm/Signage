@@ -53,42 +53,52 @@ export default class BufferWriter {
     }
 
     writeUIntBE(value: number, byteLength: number): number {
+        this.ensureCapacity(byteLength);
         this.pos = this.buffer.writeUIntBE(value, this.pos, byteLength);
         return this.pos;
     }
     writeIntBE(value: number, byteLength: number): number {
+        this.ensureCapacity(byteLength);
         this.pos = this.buffer.writeIntBE(value, this.pos, byteLength);
         return this.pos;
     }
     writeUInt8(value: number): number {
+        this.ensureCapacity(1);
         this.pos = this.buffer.writeUInt8(value, this.pos);
         return this.pos;
     }
     writeUInt16BE(value: number): number {
+        this.ensureCapacity(2);
         this.pos = this.buffer.writeUInt16BE(value, this.pos);
         return this.pos;
     }
     writeUInt32BE(value: number): number {
+        this.ensureCapacity(4);
         this.pos = this.buffer.writeUInt32BE(value, this.pos);
         return this.pos;
     }
     writeInt8(value: number): number {
+        this.ensureCapacity(1);
         this.pos = this.buffer.writeInt8(value, this.pos);
         return this.pos;
     }
     writeInt16BE(value: number): number {
+        this.ensureCapacity(2);
         this.pos = this.buffer.writeInt16BE(value, this.pos);
         return this.pos;
     }
     writeInt32BE(value: number): number {
+        this.ensureCapacity(4);
         this.pos = this.buffer.writeInt32BE(value, this.pos);
         return this.pos;
     }
     writeFloatBE(value: number): number {
+        this.ensureCapacity(4);
         this.pos = this.buffer.writeFloatBE(value, this.pos);
         return this.pos;
     }
     writeDoubleBE(value: number): number {
+        this.ensureCapacity(8);
         this.pos = this.buffer.writeDoubleBE(value, this.pos);
         return this.pos;
     }
