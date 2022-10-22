@@ -11,3 +11,9 @@ export class FileContentsException extends Error {
         super(msg);
     }
 }
+
+export class IlligalStateException extends Error {
+    constructor(msg: string) {
+        super(msg);
+    }
+}

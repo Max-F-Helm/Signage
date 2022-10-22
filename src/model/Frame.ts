@@ -1,7 +1,13 @@
 import Author from "./Author";
 
-export default interface Frame{
+export enum FrameType {
+    Addendum,
+    Vote
+}
+
+export default interface Frame {
+    frameType: FrameType,
     prevFrameHash: Uint8Array,
     timestamp: number,
-    author: Author,
+    author: Author
 }
