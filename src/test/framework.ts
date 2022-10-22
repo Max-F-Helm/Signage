@@ -1,8 +1,8 @@
-export function describe(desc: string, exec: () => void): () => void {
-    return () => {
+export function describe(desc: string, exec: () => Promise<void>): () => Promise<void> {
+    return async () => {
         console.info("\nrunning test " + desc);
         try {
-            exec();
+            await exec();
             console.info("test successful");
         } catch (e) {
             console.error(`test failed\n

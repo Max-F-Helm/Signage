@@ -1,11 +1,15 @@
 import fileProcessorTest from "@/test/FileProcessor.test";
 import identityProcessorTest from "@/test/IdentityProcessor.test";
 
+const tests = [
+    ...fileProcessorTest,
+    ...identityProcessorTest
+];
+
 export default function runTests() {
-    [
-        ...fileProcessorTest,
-        ...identityProcessorTest
-    ].forEach(t => {
-       t();
-    });
+    new Promise(() => {
+        tests.forEach(async (t) => {
+            await t();
+        });
+    }).then();
 }
