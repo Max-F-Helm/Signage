@@ -107,7 +107,7 @@ export default class BufferReader {
      * creates an Uint8Array as a view of the source
      * @param length number of bytes to read
      */
-    readUnit8Array(length: number): Uint8Array {
+    readUint8Array(length: number): Uint8Array {
         let ret = new Uint8Array(this.buffer.buffer, this.pos, length);
         this.pos += length;
         return ret;
