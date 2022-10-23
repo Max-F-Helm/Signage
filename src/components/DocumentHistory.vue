@@ -1,73 +1,45 @@
 <template>
-  <main>
-    <div class="overflow-hidden bg-white shadow sm:rounded-lg">
-      <div class="px-4 py-5 sm:px-6">
-        <h3 class="text-lg font-medium leading-6 text-gray-900">Applicant Information</h3>
-        <p class="mt-1 max-w-2xl text-sm text-gray-500">Personal details and application.</p>
-      </div>
-      <div class="border-t border-gray-200">
-        <dl>
-          <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-            <dt class="text-sm font-medium text-gray-500">Full name</dt>
-            <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">Margot Foster</dd>
-          </div>
-          <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-            <dt class="text-sm font-medium text-gray-500">Application for</dt>
-            <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">Backend Developer</dd>
-          </div>
-          <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-            <dt class="text-sm font-medium text-gray-500">Email address</dt>
-            <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">margotfoster@example.com</dd>
-          </div>
-          <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-            <dt class="text-sm font-medium text-gray-500">Salary expectation</dt>
-            <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">$120,000</dd>
-          </div>
-          <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-            <dt class="text-sm font-medium text-gray-500">About</dt>
-            <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">Fugiat ipsum ipsum deserunt culpa aute sint do nostrud anim incididunt cillum culpa consequat. Excepteur qui ipsum aliquip consequat sint. Sit id mollit nulla mollit nostrud in ea officia proident. Irure nostrud pariatur mollit ad adipisicing reprehenderit deserunt qui eu.</dd>
-          </div>
-          <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-            <dt class="text-sm font-medium text-gray-500">Attachments</dt>
-            <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-              <ul role="list" class="divide-y divide-gray-200 rounded-md border border-gray-200">
-                <li class="flex items-center justify-between py-3 pl-3 pr-4 text-sm">
-                  <div class="flex w-0 flex-1 items-center">
-                    <!--<PaperClipIcon class="h-5 w-5 flex-shrink-0 text-gray-400" aria-hidden="true" />
-                    <span class="ml-2 w-0 flex-1 truncate">resume_back_end_developer.pdf</span>-->
-                  </div>
-                  <div class="ml-4 flex-shrink-0">
-                    <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">Download</a>
-                  </div>
-                </li>
-                <li class="flex items-center justify-between py-3 pl-3 pr-4 text-sm">
-                  <div class="flex w-0 flex-1 items-center">
-                    <!--<PaperClipIcon class="h-5 w-5 flex-shrink-0 text-gray-400" aria-hidden="true" />-->
-                    <span class="ml-2 w-0 flex-1 truncate">coverletter_back_end_developer.pdf</span>
-                  </div>
-                  <div class="ml-4 flex-shrink-0">
-                    <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">Download</a>
-                  </div>
-                </li>
-              </ul>
-            </dd>
-          </div>
-        </dl>
-      </div>
+  <div v-for="(frame, idx) of modelValue" :key="idx">
+    <div :class="(((idx & 1) === 0) ? 'bg-white' : 'bg-gray-50') + ' px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6'">
+      <addendum-frame v-if="isAddendum(frame)" :model-value="frame"></addendum-frame>
+      <vote-frame v-if="isVote(frame)" :model-value="frame"></vote-frame>
     </div>
-  </main>
+  </div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import type {PropType} from "vue";
+import {defineComponent} from "vue";
+import type Frame from "@/processing/model/Frame";
+import {FrameType} from "@/processing/model/Frame";
+import AddendumFrame from "@/components/AddendumFrame.vue";
+import VoteFrame from "@/components/VoteFrame.vue";
+
+export default defineComponent({
   name: "DocumentHistory",
-  components:{},
+  components: {
+    AddendumFrame, VoteFrame
+  },
+  props: {
+    modelValue: {
+      required: true,
+      type: Array as PropType<Frame[]>
+    }
+  },
   data() {
     return {}
   },
-  methods: {}
-}
+  methods: {
+    isAddendum(frame: Frame): boolean {
+      return frame.frameType === FrameType.Addendum;
+    },
+    isVote(frame: Frame): boolean {
+      return frame.frameType === FrameType.Vote;
+    }
+  }
+});
 </script>
 
 <style scoped>
+
 </style>
