@@ -9,6 +9,7 @@
         </div>
         <div>
           <MyButton @click="loadFile" class="p-button-secondary">{{msg4}}</MyButton>
+          <input ref="fileInput" type="file" @change="onFileChange" style="display: none;">
         </div>
       </div>
     </div>
@@ -27,7 +28,7 @@ export default {
       msg: "Herzlich Willkommen!",
       msg2: "Was soll geladen werden?",
       msg3: "zuletzt verwendetes Dokument",
-      msg4: "Datei auswählen"
+      msg4: "Datei auswählen..."
     }
   },
   methods: {
@@ -35,6 +36,18 @@ export default {
       this.$router.push({path: '/'})
     },
     loadFile() {
+      this.$refs.fileInput.click()
+    },
+    onFileChange(e) {
+      let files = e.target.files || e.dataTransfer.files
+      if (!files.length)
+        return;
+
+      files[0].arrayBuffer().then(buff => {
+        let x = new Uint8Array(buff);
+      });
+
+      // TODO: actually load document
       this.$router.push({path: '/'})
     }
   }
