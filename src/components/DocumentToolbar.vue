@@ -2,7 +2,9 @@
   <main>
     <Toolbar>
       <template #start>
-        <MyButton label="Vote für letzten Vorschlag" icon="pi pi-check" @click="voteForLastProposal" class="p-button-success" />
+        <MyButton label="Einverstanden" icon="pi pi-check" @click="voteForLastProposal" class="p-button-success" />
+        <MyButton label="Ablehnen" icon="pi pi-trash" @click="rejectLastProposal" class="p-button-danger" />
+        <MyButton label="Änderungen vorschlagen" icon="pi pi-file-edit" @click="proposeChanges" class="p-button-secondary" />
       </template>
       <template #end>
         <MyButton label="Patchset importieren" icon="pi pi-upload" @click="importPatchSet" />
@@ -40,7 +42,33 @@ export default {
       let blob = new Blob([x], {type: 'application/octet-stream'});
       let url = URL.createObjectURL(blob);
       //this.download(url, 'myDocument.signage')
-      this.download(url, 'patch.sdoc')
+      this.download(url, 'Vote.spatch')
+      URL.revokeObjectURL(url);
+
+      this.modalStatus = true
+    },
+    rejectLastProposal() {
+      // TODO: this data should be the patch
+      let x = Uint8Array.from([91,68,101,115,107,116,111,112,32,69]);
+      let blob = new Blob([x], {type: 'application/octet-stream'});
+      let url = URL.createObjectURL(blob);
+      //this.download(url, 'myDocument.signage')
+      this.download(url, 'Vote.spatch')
+      URL.revokeObjectURL(url);
+
+      this.modalStatus = true
+    },
+    proposeChanges() {
+      this.$refs.fileInput.click()
+
+      // do patch stuff
+
+      // TODO: this data should be the patch
+      let x = Uint8Array.from([91,68,101,115,107,116,111,112,32,69]);
+      let blob = new Blob([x], {type: 'application/octet-stream'});
+      let url = URL.createObjectURL(blob);
+      //this.download(url, 'myDocument.signage')
+      this.download(url, 'Vote.spatch')
       URL.revokeObjectURL(url);
 
       this.modalStatus = true
@@ -69,8 +97,11 @@ export default {
 </script>
 
 <style scoped>
-  Toolbar {
+  .p-toolbar {
     border-radius: 0;
     border: none;
+  }
+  button {
+    margin: .3rem;
   }
 </style>
