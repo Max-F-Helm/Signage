@@ -2,11 +2,11 @@
   <main>
     <Toolbar>
       <template #start>
-        <MyButton label="Vote für letzten Vorschlag" icon="pi pi-check" @click="" class="p-button-success" />
+        <MyButton label="Vote für letzten Vorschlag" icon="pi pi-check" @click="voteForLastProposal" class="p-button-success" />
       </template>
       <template #end>
         <MyButton label="Patchset importieren" icon="pi pi-upload" @click="importPatchSet" />
-        <Modal2 :modalStatus="modalStatus"/>
+        <Modal2 :modalTrigger="modalTrigger"/>
       </template>
     </Toolbar>
   </main>
@@ -15,7 +15,7 @@
 <script>
 import MyButton from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
-import Modal2 from "@/components/Modal2";
+import Modal2 from "@/components/Modal2.vue";
 import Modal from './Modal.vue';
 export default {
   name: "StartPage",
@@ -26,12 +26,14 @@ export default {
   },
   data() {
     return {
-      modalStatus: false
+      modalTrigger: 0
     }
   },
   methods: {
     importPatchSet() {
-      this.modalStatus = true
+    },
+    voteForLastProposal() {
+      this.modalTrigger++
     }
   }
 }

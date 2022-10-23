@@ -18,6 +18,6 @@ import DocumentToolbar from '../components/DocumentToolbar.vue'
     right: 0;
     bottom: 0;
     box-shadow: 0 0 1rem rgba(0,0,0,.3);
-    z-index: 999999;
+    z-index: 5;
   }
 </style>
