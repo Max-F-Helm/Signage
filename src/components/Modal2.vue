@@ -1,26 +1,31 @@
-<script>
-export default {
-  data() {
-    return {
-      open: false
+<script lang="ts">
+import {defineComponent} from "vue";
+
+export default defineComponent({
+  name: "Modal2",
+  props: {
+    modelValue: {
+      required: true,
+      type: Boolean
+    }
+  },
+  emits: ["update:modelValue"],
+  computed: {
+    open: {
+      get(): boolean {
+        return this.modelValue;
+      },
+      set(v: boolean) {
+        this.$emit("update:modelValue", v);
+      }
     }
   },
   methods:{
-    openModal(){
-      this.open = true;
-    },
     closeModal(){
       this.open = false;
     }
-  },
-  props: ["modalStatus"],
-  watch:{
-    modalStatus: function(newVal){
-      this.open = newVal
-      window.alert("angekommen")
-    }
   }
-}
+});
 </script>
 
 <template>
