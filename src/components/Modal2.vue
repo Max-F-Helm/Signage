@@ -24,9 +24,26 @@ export default defineComponent({
     closeModal(){
       this.open = false;
     },
-    saveFileModal() {
+    saveFile() {
+      // TODO: this data should be the document state
+      let x = Uint8Array.from([91,68,101,115,107,116,111,112,32,69]);
+      let blob = new Blob([x], {type: 'application/octet-stream'});
+      let url = URL.createObjectURL(blob);
+      this.download(url, 'myDocument.signage')
+      //this.download(url, 'patch.sdoc')
+      URL.revokeObjectURL(url);
 
       this.closeModal();
+    },
+    download(path, filename) {
+      // TODO: move this to some util file later
+      let anchor = document.createElement('a');
+      anchor.href = path;
+      anchor.download = filename;
+
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
     }
   }
 });
