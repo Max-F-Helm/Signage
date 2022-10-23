@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h3>Addendum</h3>
+    <h3>Addendum - {{modelValue.title}}</h3>
     <div>
       Author: {{modelValue.author.name}}
     </div>
