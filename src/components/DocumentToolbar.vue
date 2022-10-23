@@ -19,6 +19,8 @@
 import MyButton from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
 import Modal2 from "@/components/Modal2.vue";
+import {fileProcessorWrapper} from "@/FileProcessorWrapper";
+import {Buffer} from "buffer";
 
 export default {
   name: "StartPage",
@@ -59,7 +61,8 @@ export default {
       this.modalStatus = true
     },
     proposeChanges() {
-      this.$refs.fileInput.click()
+      this.$refs.fileInput.click();
+      return;
 
       // do patch stuff
 
@@ -78,9 +81,11 @@ export default {
       if (!files.length)
         return;
 
-      files[0].arrayBuffer().then(buff => {
-        let x = new Uint8Array(buff);
-      });
+      (async () => {
+        const data = await files[0].arrayBuffer();
+        const mime = files[0].type;
+        fileProcessorWrapper.addAddendum("Test-Add", mime, Buffer.from(data));
+      })().then();
     },
     download(path, filename) {
       // TODO: move this to some util file later

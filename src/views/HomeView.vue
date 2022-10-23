@@ -1,6 +1,6 @@
 <template>
   <main>
-    <DocumentHistory :model-value="frames" />
+    <DocumentHistory :model-value="frames.val" />
     <DocumentToolbar class="toolbar" />
   </main>
 </template>
@@ -8,15 +8,17 @@
 <script setup lang="ts">
 import DocumentHistory from '../components/DocumentHistory.vue'
 import DocumentToolbar from '../components/DocumentToolbar.vue'
-import {onBeforeMount, onBeforeUnmount, ref} from "vue";
+import {onBeforeMount, onBeforeUnmount, reactive, ref} from "vue";
 import type Frame from "@/processing/model/Frame";
 import {fileProcessorWrapper} from "@/FileProcessorWrapper";
 
-const frames = ref<Frame[]>([]);
+const frames = reactive({
+  val: [] as Frame[]
+});
 
 function updateFrames() {
   if(fileProcessorWrapper.isFileLoaded())
-    frames.value = fileProcessorWrapper.getProposal().frames;
+    frames.val = fileProcessorWrapper.getProposal().frames;
 }
 
 onBeforeMount(() => {

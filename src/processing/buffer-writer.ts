@@ -1,7 +1,7 @@
 import {Buffer} from "buffer";
 
 const INITIAL_CAPACITY = 512;
-const GROW_FACTOR = 1.75;
+const GROWTH_FACTOR = 1.75;
 
 export default class BufferWriter {
 
@@ -131,7 +131,8 @@ export default class BufferWriter {
 
     private ensureCapacity(size: number) {
         if(this.buffer.length < this.pos + size) {
-            const newBuffer = Buffer.alloc(this.buffer.length * GROW_FACTOR, 0);
+            const newSize = Math.max(this.pos + size, this.buffer.length * GROWTH_FACTOR);
+            const newBuffer = Buffer.alloc(newSize, 0);
             this.buffer.copy(newBuffer, 0, 0, this.pos);
             this.buffer = newBuffer;
         }
