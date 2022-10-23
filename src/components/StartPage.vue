@@ -18,6 +18,11 @@
 
 <script>
 import MyButton from 'primevue/button';
+import {mocks} from "@/mocks";
+import {fileProcessorWrapper} from "@/FileProcessorWrapper";
+import BufferReader from "@/processing/buffer-reader";
+import {Buffer} from "buffer";
+
 export default {
   name: "StartPage",
   components:{
@@ -43,12 +48,15 @@ export default {
       if (!files.length)
         return;
 
-      files[0].arrayBuffer().then(buff => {
-        let x = new Uint8Array(buff);
-      });
-
-      // TODO: actually load document
-      this.$router.push({path: '/'})
+      (async () => {
+        const mockData = await mocks;
+        const data = await files[0].arrayBuffer();
+        fileProcessorWrapper.setIdentity(mockData.identity);
+        fileProcessorWrapper.init(false);
+        fileProcessorWrapper.loadFile(new BufferReader(Buffer.from(data)), null);
+      })().then(() => {
+        this.$router.push({path: '/'});
+      })
     }
   }
 }
