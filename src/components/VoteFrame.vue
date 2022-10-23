@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h4>Vote</h4>
+    <h3>Vote</h3>
     <div>
       Author: {{modelValue.author.name}}
     </div>
