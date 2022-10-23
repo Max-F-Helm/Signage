@@ -1,4 +1,5 @@
 import {FileProcessor} from "@/processing/file-processor";
+import type {Proposal} from "@/processing/file-processor";
 import type {ErrorCallback} from "@/processing/file-processor";
 import type {Identity} from "@/processing/identity-processor";
 import {IllegalStateException} from "@/processing/exceptions";
@@ -49,6 +50,17 @@ export class FileProcessorWrapper {
 
         this.fileProcessor = new FileProcessor(this.identity, encrypted, (msg) => this.onErr(msg));
         this.onUpdated();
+    }
+
+    isFileLoaded(): boolean {
+        return this.fileProcessor !== null && this.fileProcessor.isLoaded();
+    }
+
+    getProposal(): Proposal {
+        if(this.fileProcessor === null)
+            throw new IllegalStateException("not initialized");
+
+        return this.fileProcessor.getProposal();
     }
 
     createFile(authors: Author[]) {

@@ -46,6 +46,10 @@ export class FileProcessor {
         this.errorCallback = errorCallback;
     }
 
+    isLoaded(): boolean {
+        return this.authors !== undefined && this.frames !== undefined;
+    }
+
     getProposal(): Proposal {
         if(this.authors === undefined || this.frames === undefined)
             throw new IllegalStateException("no file is loaded");
