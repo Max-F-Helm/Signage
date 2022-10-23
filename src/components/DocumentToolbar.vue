@@ -6,7 +6,7 @@
       </template>
       <template #end>
         <MyButton label="Patchset importieren" icon="pi pi-upload" @click="importPatchSet" />
-        <Modal2 :modalTrigger="modalTrigger"/>
+        <Modal2 v-model="modalStatus"/>
       </template>
     </Toolbar>
   </main>
@@ -16,7 +16,7 @@
 import MyButton from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
 import Modal2 from "@/components/Modal2.vue";
-import Modal from './Modal.vue';
+
 export default {
   name: "StartPage",
   components:{
@@ -26,14 +26,14 @@ export default {
   },
   data() {
     return {
-      modalTrigger: 0
+      modalStatus: false
     }
   },
   methods: {
     importPatchSet() {
     },
     voteForLastProposal() {
-      this.modalTrigger++
+      this.modalStatus = true
     }
   }
 }
