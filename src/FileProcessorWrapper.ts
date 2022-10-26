@@ -44,11 +44,11 @@ export class FileProcessorWrapper {
         return this.identity;
     }
 
-    init(encrypted: boolean) {
+    init() {
         if(this.identity === null)
             throw new IllegalStateException("no identity was set");
 
-        this.fileProcessor = new FileProcessor(this.identity, encrypted, (msg) => this.onErr(msg));
+        this.fileProcessor = new FileProcessor(this.identity, (msg) => this.onErr(msg));
         this.onUpdated();
     }
 
@@ -72,20 +72,20 @@ export class FileProcessorWrapper {
         })().then(() => this.onUpdated());
     }
 
-    loadFile(data: BufferReader, key: Uint8Array | null) {
+    loadFile(data: BufferReader) {
         if(this.fileProcessor === null)
             throw new IllegalStateException("not initialized");
 
         (async () => {
-            await this.fileProcessor!.loadFile(data, key);
+            await this.fileProcessor!.loadFile(data);
         })().then(() => this.onUpdated());
     }
 
-    saveFile(key: Uint8Array | null): Promise<Buffer> {
+    saveFile(): Promise<Buffer> {
         if(this.fileProcessor === null)
             throw new IllegalStateException("not initialized");
 
-        return this.fileProcessor!.saveFile(key);
+        return this.fileProcessor!.saveFile();
     }
 
     addAddendum(title: string, mime: string, content: Buffer) {

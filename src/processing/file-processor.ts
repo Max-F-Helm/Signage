@@ -1,6 +1,6 @@
-import {Buffer} from "buffer";
+import type {Buffer} from "buffer";
 import deepEqual from "@/deep-equals";
-import BufferReader from "./buffer-reader";
+import type BufferReader from "./buffer-reader";
 import BufferWriter from "./buffer-writer";
 import {FileContentsException, IllegalArgumentException, IllegalStateException} from "./exceptions";
 import Bill from "./bill";
@@ -29,7 +29,6 @@ export interface Proposal {
 
 export class FileProcessor {
 
-    private readonly encryptFile: boolean;
     private readonly errorCallback: ErrorCallback;
     private readonly identity: Identity | null;
 
@@ -40,9 +39,8 @@ export class FileProcessor {
 
     private readonly addedFrames: Frame[] = [];
 
-    constructor(identity: Identity, encryptFile: boolean, errorCallback: ErrorCallback) {
+    constructor(identity: Identity, errorCallback: ErrorCallback) {
         this.identity = identity;
-        this.encryptFile = encryptFile;
         this.errorCallback = errorCallback;
     }
 
@@ -77,13 +75,7 @@ export class FileProcessor {
     //endregion
 
     //region load file
-    async loadFile(data: BufferReader, key: Uint8Array | null) {
-        if(this.encryptFile){
-            if(key === null)
-                throw new IllegalArgumentException("key must be provided if encryptFile is enabled");
-            data = await this.decryptData(data, key);
-        }
-
+    async loadFile(data: BufferReader) {
         this.readAndCheckFileVersion(data);
         this.authors = await this.loadAuthors(data);
 
@@ -109,15 +101,6 @@ export class FileProcessor {
             throw new Error("assertion failed");
         loadedFrames.splice(0, 1);
         this.frames = loadedFrames;
-    }
-
-    private async decryptData(data: BufferReader, key: Uint8Array): Promise<BufferReader> {
-        const dataPos = data.position();
-        let dataArr = data.readToUnit8Array();
-        dataArr = await Bill.decrypt(dataArr, key);
-        let decryptedReader = new BufferReader(new Buffer(dataArr));
-        decryptedReader.setPositionAbs(dataPos);
-        return decryptedReader;
     }
 
     private readAndCheckFileVersion(data: BufferReader) {
@@ -374,7 +357,7 @@ export class FileProcessor {
     //endregion
 
     //region save file
-    async saveFile(key: Uint8Array | null): Promise<Buffer> {
+    async saveFile(): Promise<Buffer> {
         if(this.identity === null)
             throw new IllegalStateException("no identity was set");
         if(this.authors === undefined)
@@ -387,14 +370,7 @@ export class FileProcessor {
         data.writeUint8Array(this.genesisValue!);
         await this.writeFrames(data, this.frames!);
 
-        const dataFinal = data.take();
-        if(this.encryptFile){
-            if(key === null)
-                throw new IllegalArgumentException("key must be provided if encryptFile is enabled");
-            return Buffer.from(await Bill.encrypt(dataFinal, key));
-        }else {
-            return dataFinal;
-        }
+        return data.take();
     }
 
     private async writeAuthors(data: BufferWriter) {
