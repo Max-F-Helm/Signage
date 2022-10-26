@@ -37,7 +37,7 @@ import IdentityProcessor from "@/processing/identity-processor";
 import BufferReader from "@/processing/buffer-reader";
 import FileProcessorWrapper from "@/FileProcessorWrapper";
 
-const emit = defineEmits(["update:valid"]);
+const emit = defineEmits(["update:ready"]);
 
 const file = ref<File | null>(null);
 const passwd = ref("");
@@ -45,7 +45,7 @@ const errorMsg = ref("");
 
 const success = ref(false);
 watch(success, () => {
-  emit("update:valid", success.value);
+  emit("update:ready", success.value);
 });
 
 const idUplLoadDisabled = computed(() => {

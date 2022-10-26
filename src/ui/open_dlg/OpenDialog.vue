@@ -6,13 +6,11 @@
       </template>
 
       <template #od-id_upl>
-        <IdUpload @update:valid="v => onUpdateStepValid('od-id_upl', v)"></IdUpload>
+        <IdUpload @update:ready="v => onUpdateStepReady('od-id_upl', v)"></IdUpload>
       </template>
 
       <template #od-id_new>
-        <div class="flex flex-column row-gap-3">
-
-        </div>
+        <IdNew @update:ready="v => onUpdateStepReady('od-id_new', v)"></IdNew>
       </template>
     </Steps>
 
@@ -35,6 +33,7 @@ import type {StepsItem} from "@/ui/utils/Steps-exports";
 import {fold} from "@/ui/utils/utils";
 import IdUpload from "@/ui/open_dlg/IdUpload.vue";
 import IdChoice from "@/ui/open_dlg/IdChoice.vue";
+import IdNew from "@/ui/open_dlg/IdNew.vue";
 
 const emit = defineEmits(["update:modelValue"]);
 
@@ -75,7 +74,7 @@ const steps = ref<StepsItem[]>([
   }
 ]);
 
-const stepValid = ref<Record<string, boolean>>(fold(steps.value, {}, (obj: Record<string, boolean>, step) => {
+const stepReady = ref<Record<string, boolean>>(fold(steps.value, {}, (obj: Record<string, boolean>, step) => {
   obj[step.id] = false;
   return obj;
 }));
@@ -84,11 +83,11 @@ const backDisabled = computed(() => {
   return currentStep.value === steps.value[0].id;
 });
 const nextDisabled = computed(() => {
-  return !stepValid.value[currentStep.value];
+  return !stepReady.value[currentStep.value];
 });
 
-function onUpdateStepValid(stepId: string, valid: boolean) {
-  stepValid.value[stepId] = valid;
+function onUpdateStepReady(stepId: string, valid: boolean) {
+  stepReady.value[stepId] = valid;
 }
 
 function onIdUpdateChoice(choice: string) {
@@ -105,7 +104,7 @@ function onIdUpdateChoice(choice: string) {
       throw new Error();
   }
 
-  stepValid.value["od-id_choice"] = true;
+  stepReady.value["od-id_choice"] = true;
 }
 
 function onNext() {
