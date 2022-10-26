@@ -8,3 +8,11 @@ export function findParent(element: HTMLElement, withClass: string): HTMLElement
 
     return null;
 }
+
+export function fold<I, O>(arr: I[], initialValue: O, cb: (result: O, item: I) => O): O {
+    let result = initialValue;
+    arr.forEach(item => {
+        result = cb(result, item);
+    });
+    return result;
+}

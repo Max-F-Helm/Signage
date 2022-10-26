@@ -90,7 +90,7 @@ import InputText from "primevue/inputtext";
 import Password from "primevue/password";
 import FileUpload from "primevue/fileupload";
 
-import OpenDialog from "@/ui/OpenDialog.vue";
+import OpenDialog from "@/ui/open_dlg/OpenDialog.vue";
 
 const visibleLeft = ref(false);
 let documentState: boolean = false;
