@@ -55,7 +55,7 @@ export default {
         fileProcessorWrapper.init(false);
         fileProcessorWrapper.loadFile(new BufferReader(Buffer.from(data)), null);
       })().then(() => {
-        this.$router.push({path: '/'});
+        this.$router.push({path: '/document'});
       })
     }
   }

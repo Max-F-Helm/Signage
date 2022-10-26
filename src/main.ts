@@ -7,7 +7,7 @@ import PrimeVue from 'primevue/config';
 import './assets/main.css';
 
 import 'primevue/resources/primevue.min.css';
-import 'primevue/resources/themes/tailwind-light/theme.css';
+import 'primevue/resources/themes/arya-blue/theme.css';
 import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.scss';
 

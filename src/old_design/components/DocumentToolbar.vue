@@ -9,7 +9,7 @@
       <template #end>
         <MyButton label="Patchset importieren" icon="pi pi-upload" @click="importPatchSet" />
         <input ref="fileInput" type="file" @change="onFileChange" style="display: none;">
-        <Modal2 v-model="modalStatus"/>
+        <!--<Modal2 v-model="modalStatus"/>-->
       </template>
     </Toolbar>
   </main>
@@ -18,7 +18,6 @@
 <script>
 import MyButton from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
-import Modal2 from "@/components/Modal2.vue";
 import {fileProcessorWrapper} from "@/FileProcessorWrapper";
 import {Buffer} from "buffer";
 
@@ -26,8 +25,7 @@ export default {
   name: "StartPage",
   components:{
     MyButton,
-    Toolbar,
-    Modal2
+    Toolbar
   },
   data() {
     return {

@@ -9,7 +9,9 @@ import type {Buffer} from "buffer";
 
 export type Listener = () => void;
 
-export class FileProcessorWrapper {
+export default class FileProcessorWrapper {
+
+    static readonly INSTANCE = new FileProcessorWrapper();
 
     private fileProcessor: FileProcessor | null = null;
     private identity: Identity | null = null;
@@ -137,5 +139,3 @@ export class FileProcessorWrapper {
         this.listeners.forEach(l => l());
     }
 }
-
-export const fileProcessorWrapper = new FileProcessorWrapper();

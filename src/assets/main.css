@@ -1,36 +1,8 @@
-@import './base.css';
-
 #app {
-}
-/*
 
-max-width: 100%;
-    max-height: 100%;
-    margin: auto;
-    padding: 2rem;
-    font-weight: normal;
-
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+.big-dlg {
+    width: 80vw;
+    height: 80vh;
 }
-
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-  }
-
-  #app {
-    padding: 0 2rem;
-  }
-}
-
- */
