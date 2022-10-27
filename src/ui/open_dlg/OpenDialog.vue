@@ -12,6 +12,18 @@
       <template #od-id_new>
         <IdNew @update:ready="v => onUpdateStepReady('od-id_new', v)"></IdNew>
       </template>
+
+      <template #od-doc_choice>
+        <DocChoice @update:choice="onDocUpdateChoice"></DocChoice>
+      </template>
+
+      <template #od-doc_upl>
+        <DocUpload @update:ready="v => onUpdateStepReady('od-doc_upl', v)"></DocUpload>
+      </template>
+
+      <template #od-doc_new>
+        <DocNew @update:ready="v => onUpdateStepReady('od-doc_new', v)"></DocNew>
+      </template>
     </Steps>
 
     <template #footer>
@@ -34,6 +46,9 @@ import {fold} from "@/ui/utils/utils";
 import IdUpload from "@/ui/open_dlg/IdUpload.vue";
 import IdChoice from "@/ui/open_dlg/IdChoice.vue";
 import IdNew from "@/ui/open_dlg/IdNew.vue";
+import DocChoice from "@/ui/open_dlg/DocChoice.vue";
+import DocUpload from "@/ui/open_dlg/DocUpload.vue";
+import DocNew from "@/ui/open_dlg/DocNew.vue";
 
 const emit = defineEmits(["update:modelValue"]);
 
@@ -55,6 +70,8 @@ const open = computed({
 
 const idModeUpl = ref(false);
 const idModeNew = ref(false);
+const docModeUpl = ref(false);
+const docModeNew = ref(false);
 
 const currentStep = ref("od-id_choice");
 const steps = ref<StepsItem[]>([
@@ -71,6 +88,20 @@ const steps = ref<StepsItem[]>([
     id: "od-id_new",
     label: "Create Identity",
     hidden: idModeUpl as unknown as boolean
+  },
+  {
+    id: "od-doc_choice",
+    label: "Proposal Source"
+  },
+  {
+    id: "od-doc_upl",
+    label: "Open Proposal",
+    hidden: docModeNew as unknown as boolean
+  },
+  {
+    id: "od-doc_new",
+    label: "Create Proposal",
+    hidden: docModeUpl as unknown as boolean
   }
 ]);
 
@@ -105,6 +136,23 @@ function onIdUpdateChoice(choice: string) {
   }
 
   stepReady.value["od-id_choice"] = true;
+}
+
+function onDocUpdateChoice(choice: string) {
+  switch (choice) {
+    case "upload":
+      docModeUpl.value = true;
+      docModeNew.value = false;
+      break;
+    case "new":
+      docModeUpl.value = false;
+      docModeNew.value = true;
+      break;
+    default:
+      throw new Error();
+  }
+
+  stepReady.value["od-doc_choice"] = true;
 }
 
 function onNext() {

@@ -3,7 +3,7 @@
     <div>
       <FileUpload mode="advanced" :multiple="false" :fileLimit="1"
                   :showUploadButton="false" :showCancelButton="false"
-                  @select="idUplSetFile" @remove="idUplClearFile"></FileUpload>
+                  @select="addFile" @remove="delFile"></FileUpload>
     </div>
     <div class="p-inputgroup">
             <span class="p-inputgroup-addon">
@@ -12,7 +12,7 @@
       <Password v-model="passwd" :feedback="false" placeholder="Password"/>
     </div>
     <div>
-      <PButton @click="idUplLoad" :disabled="idUplLoadDisabled">Load</PButton>
+      <PButton @click="load" :disabled="loadDisabled">Load</PButton>
       <div class="flex-grow-1"></div>
     </div>
 
@@ -20,7 +20,7 @@
       {{ errorMsg }}
     </div>
     <div v-show="success" class="p-inline-message p-inline-message-success">
-      Identity loaded
+      Proposal loaded
     </div>
   </div>
 </template>
@@ -29,17 +29,16 @@
 import {computed, ref, watch} from "vue";
 import PButton from "primevue/button";
 import FileUpload from "primevue/fileupload";
-import type {FileUploadSelectEvent} from "primevue/fileupload";
+import type {FileUploadSelectEvent, FileUploadRemoveEvent} from "primevue/fileupload";
 import Password from "primevue/password";
 import Bill from "@/processing/bill";
 import {Buffer} from "buffer";
-import IdentityProcessor from "@/processing/identity-processor";
 import BufferReader from "@/processing/buffer-reader";
 import FileProcessorWrapper from "@/FileProcessorWrapper";
 
 const emit = defineEmits(["update:ready"]);
 
-const file = ref<File | null>(null);
+const file = ref<File[]>([]);
 const passwd = ref("");
 const errorMsg = ref("");
 
@@ -48,18 +47,18 @@ watch(success, () => {
   emit("update:ready", success.value);
 });
 
-const idUplLoadDisabled = computed(() => {
-  return file.value === null || passwd.value.length === 0;
+const loadDisabled = computed(() => {
+  return file.value.length !== 1 || passwd.value.length === 0;
 });
 
-function idUplSetFile(e: FileUploadSelectEvent) {
-  file.value = e.files[0];
+function addFile(e: FileUploadSelectEvent) {
+  file.value = e.files;
 }
-function idUplClearFile() {
-  file.value = null;
+function delFile(e: FileUploadRemoveEvent) {
+  file.value = e.files;
 }
 
-async function idUplLoad() {
+async function load() {
   success.value = false;
   errorMsg.value = "";
 
@@ -73,7 +72,7 @@ async function idUplLoad() {
         reject(e.target!.error);
       }
     });
-    reader.readAsArrayBuffer(file.value!);
+    reader.readAsArrayBuffer(file.value[0]);
     const data = Buffer.from(await filePromise);
 
     try {
@@ -81,22 +80,21 @@ async function idUplLoad() {
       const dataDec = Buffer.from(await Bill.decrypt(data, key));
 
       try {
-        const identity = await IdentityProcessor.loadIdentity(new BufferReader(dataDec));
-        FileProcessorWrapper.INSTANCE.setIdentity(identity);
-        FileProcessorWrapper.INSTANCE.init();
+        await FileProcessorWrapper.INSTANCE.loadFile(new BufferReader(dataDec));
+        FileProcessorWrapper.INSTANCE.setKey(key);
 
         success.value = true;
       }catch (e) {
-        console.error("unable to load identity from file: load failed", e);
-        errorMsg.value = "there was an error while loading the identity (the file seems corrupted)";
+        console.error("unable to load proposal from file: load failed", e);
+        errorMsg.value = "there was an error while loading the proposal (the file seems corrupted)";
       }
     } catch (e) {
-      console.error("unable to load identity from file: decryption failed", e);
-      errorMsg.value = "there was an error while loading the identity (was the password correct?)";
+      console.error("unable to load proposal from file: decryption failed", e);
+      errorMsg.value = "there was an error while loading the proposal (was the password correct?)";
     }
   } catch (e) {
-    console.error("unable to load identity from file: open failed", e);
-    errorMsg.value = "there was an error while loading the identity (unable to open the file)";
+    console.error("unable to load proposal from file: open failed", e);
+    errorMsg.value = "there was an error while loading the proposal (unable to open the file)";
   }
 }
 </script>

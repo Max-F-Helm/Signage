@@ -78,6 +78,8 @@ async function onCreate() {
     download(dataEnc, "identity.sIden");
 
     FileProcessorWrapper.INSTANCE.setIdentity(identity);
+    FileProcessorWrapper.INSTANCE.init();
+
     ready.value = true;
   } catch (e) {
     console.error("unable to create identity:", e);
