@@ -1,9 +1,7 @@
 <template>
   <div class="flex flex-column row-gap-3">
     <div>
-      <FileUpload :fileLimit="1" :multiple="false" :showCancelButton="false"
-                  :showUploadButton="false" mode="advanced"
-                  @remove="idUplClearFile" @select="idUplSetFile"></FileUpload>
+      <FileUploadLight @remove="idUplClearFile" @select="idUplSetFile"></FileUploadLight>
     </div>
     <div class="p-inputgroup">
             <span class="p-inputgroup-addon">
@@ -29,13 +27,13 @@
   import {computed, ref, watch} from "vue";
   import PButton from "primevue/button";
   import type {FileUploadSelectEvent} from "primevue/fileupload";
-  import FileUpload from "primevue/fileupload";
   import Password from "primevue/password";
   import Bill from "@/processing/bill";
   import {Buffer} from "buffer";
   import IdentityProcessor from "@/processing/identity-processor";
   import BufferReader from "@/processing/buffer-reader";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
+  import FileUploadLight from "@/ui/open_dlg/FileUploadLight.vue";
 
   const emit = defineEmits(["update:ready"]);
 
