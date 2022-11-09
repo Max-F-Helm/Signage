@@ -38,7 +38,6 @@
 </template>
 
 <script setup lang="ts">
-
     import InputText from 'primevue/inputtext';
     import PButton from "primevue/button";
     import Card from "primevue/card";
@@ -57,6 +56,6 @@
 
 </script>
 
-<style>
+<style lang="scss">
 
 </style>

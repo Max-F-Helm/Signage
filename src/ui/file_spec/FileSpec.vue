@@ -1,15 +1,15 @@
 <template>
     <div>
         <Users />
-        <Addendum />
+        <Contents />
     </div>
 </template>
 
 <script setup lang="ts">
     import Users from "./components/Users.vue";
-    import Addendum from "./components/Addendum.vue";
+    import Contents from "./components/Contents.vue"
 </script>
 
-<style>
+<style lang="scss">
     
 </style>

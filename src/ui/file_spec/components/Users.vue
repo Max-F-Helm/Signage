@@ -11,7 +11,6 @@
 </template>
 
 <script setup lang="ts">
-
     import DataTable from "primevue/datatable";
     import Column from "primevue/column";
     import Panel from "primevue/panel";
@@ -28,6 +27,6 @@
     
 </script>
 
-<style>
+<style lang="scss">
 
 </style>
