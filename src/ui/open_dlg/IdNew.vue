@@ -4,13 +4,13 @@
       <span class="p-inputgroup-addon">
         <i class="pi pi-user"></i>
       </span>
-      <InputText v-model="name" type="text" placeholder="Name"></InputText>
+      <InputText v-model="name" placeholder="Name" type="text"></InputText>
     </div>
     <div class="p-inputgroup">
       <span class="p-inputgroup-addon">
         <i class="pi pi-at"></i>
       </span>
-      <InputText v-model="mail" type="email" placeholder="E-Mail"></InputText>
+      <InputText v-model="mail" placeholder="E-Mail" type="email"></InputText>
     </div>
     <div class="p-inputgroup">
       <span class="p-inputgroup-addon">
@@ -33,61 +33,61 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import {computed, ref, watch} from "vue";
-import PButton from "primevue/button";
-import Password from "primevue/password";
-import InputText from "primevue/inputtext";
-import IdentityProcessor from "@/processing/identity-processor";
-import Bill from "@/processing/bill";
-import BufferWriter from "@/processing/buffer-writer";
-import {download} from "@/ui/utils/utils";
-import FileProcessorWrapper from "@/FileProcessorWrapper";
+<script lang="ts" setup>
+  import {computed, ref, watch} from "vue";
+  import PButton from "primevue/button";
+  import Password from "primevue/password";
+  import InputText from "primevue/inputtext";
+  import IdentityProcessor from "@/processing/identity-processor";
+  import Bill from "@/processing/bill";
+  import BufferWriter from "@/processing/buffer-writer";
+  import {download} from "@/ui/utils/utils";
+  import FileProcessorWrapper from "@/FileProcessorWrapper";
 
-const emit = defineEmits(["update:ready"]);
+  const emit = defineEmits(["update:ready"]);
 
-const name = ref("");
-const mail = ref("");
-const passwd = ref("");
-const errorMsg = ref("");
+  const name = ref("");
+  const mail = ref("");
+  const passwd = ref("");
+  const errorMsg = ref("");
 
-const valid = computed(() => {
-  return name.value.length !== 0
-      && mail.value.length !== 0
-      && passwd.value.length !== 0;
-});
+  const valid = computed(() => {
+    return name.value.length !== 0
+        && mail.value.length !== 0
+        && passwd.value.length !== 0;
+  });
 
-const ready = ref(false);
-watch(ready, () => {
-  emit("update:ready", ready.value);
-});
+  const ready = ref(false);
+  watch(ready, () => {
+    emit("update:ready", ready.value);
+  });
 
-async function onCreate() {
-  ready.value = false;
-  errorMsg.value = "";
+  async function onCreate() {
+    ready.value = false;
+    errorMsg.value = "";
 
-  try {
-    const key = await Bill.digest_pwd(passwd.value);
+    try {
+      const key = await Bill.digest_pwd(passwd.value);
 
-    const identity = await IdentityProcessor.createIdentity(name.value, mail.value, await Bill.gen_ecc_keypair());
+      const identity = await IdentityProcessor.createIdentity(name.value, mail.value, await Bill.gen_ecc_keypair());
 
-    const writer = new BufferWriter();
-    await IdentityProcessor.saveIdentity(writer, identity);
-    const dataEnc = await Bill.encrypt(writer.take(), key);
+      const writer = new BufferWriter();
+      await IdentityProcessor.saveIdentity(writer, identity);
+      const dataEnc = await Bill.encrypt(writer.take(), key);
 
-    download(dataEnc, "identity.sIden");
+      download(dataEnc, "identity.sIden");
 
-    FileProcessorWrapper.INSTANCE.setIdentity(identity);
-    FileProcessorWrapper.INSTANCE.init();
+      FileProcessorWrapper.INSTANCE.setIdentity(identity);
+      FileProcessorWrapper.INSTANCE.init();
 
-    ready.value = true;
-  } catch (e) {
-    console.error("unable to create identity:", e);
-    errorMsg.value = "there was an error while creating the identity";
+      ready.value = true;
+    } catch (e) {
+      console.error("unable to create identity:", e);
+      errorMsg.value = "there was an error while creating the identity";
+    }
   }
-}
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 
 </style>

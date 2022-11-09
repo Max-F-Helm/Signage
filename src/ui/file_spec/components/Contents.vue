@@ -11,7 +11,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
   import Addendum from "./Addendum.vue";
   import Vote from "./Vote.vue";
   import type {PropType} from "vue";
@@ -27,5 +27,5 @@
 </script>
 
 <style lang="scss">
-    
+
 </style>

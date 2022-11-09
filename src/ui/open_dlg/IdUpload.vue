@@ -1,9 +1,9 @@
 <template>
   <div class="flex flex-column row-gap-3">
     <div>
-      <FileUpload mode="advanced" :multiple="false" :fileLimit="1"
-                  :showUploadButton="false" :showCancelButton="false"
-                  @select="idUplSetFile" @remove="idUplClearFile"></FileUpload>
+      <FileUpload :fileLimit="1" :multiple="false" :showCancelButton="false"
+                  :showUploadButton="false" mode="advanced"
+                  @remove="idUplClearFile" @select="idUplSetFile"></FileUpload>
     </div>
     <div class="p-inputgroup">
             <span class="p-inputgroup-addon">
@@ -12,7 +12,7 @@
       <Password v-model="passwd" :feedback="false" placeholder="Password"/>
     </div>
     <div>
-      <PButton @click="idUplLoad" :disabled="idUplLoadDisabled">Load</PButton>
+      <PButton :disabled="idUplLoadDisabled" @click="idUplLoad">Load</PButton>
       <div class="flex-grow-1"></div>
     </div>
 
@@ -25,82 +25,83 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import {computed, ref, watch} from "vue";
-import PButton from "primevue/button";
-import FileUpload from "primevue/fileupload";
-import type {FileUploadSelectEvent} from "primevue/fileupload";
-import Password from "primevue/password";
-import Bill from "@/processing/bill";
-import {Buffer} from "buffer";
-import IdentityProcessor from "@/processing/identity-processor";
-import BufferReader from "@/processing/buffer-reader";
-import FileProcessorWrapper from "@/FileProcessorWrapper";
+<script lang="ts" setup>
+  import {computed, ref, watch} from "vue";
+  import PButton from "primevue/button";
+  import type {FileUploadSelectEvent} from "primevue/fileupload";
+  import FileUpload from "primevue/fileupload";
+  import Password from "primevue/password";
+  import Bill from "@/processing/bill";
+  import {Buffer} from "buffer";
+  import IdentityProcessor from "@/processing/identity-processor";
+  import BufferReader from "@/processing/buffer-reader";
+  import FileProcessorWrapper from "@/FileProcessorWrapper";
 
-const emit = defineEmits(["update:ready"]);
+  const emit = defineEmits(["update:ready"]);
 
-const file = ref<File | null>(null);
-const passwd = ref("");
-const errorMsg = ref("");
+  const file = ref<File | null>(null);
+  const passwd = ref("");
+  const errorMsg = ref("");
 
-const success = ref(false);
-watch(success, () => {
-  emit("update:ready", success.value);
-});
+  const success = ref(false);
+  watch(success, () => {
+    emit("update:ready", success.value);
+  });
 
-const idUplLoadDisabled = computed(() => {
-  return file.value === null || passwd.value.length === 0;
-});
+  const idUplLoadDisabled = computed(() => {
+    return file.value === null || passwd.value.length === 0;
+  });
 
-function idUplSetFile(e: FileUploadSelectEvent) {
-  file.value = e.files[0];
-}
-function idUplClearFile() {
-  file.value = null;
-}
+  function idUplSetFile(e: FileUploadSelectEvent) {
+    file.value = e.files[0];
+  }
 
-async function idUplLoad() {
-  success.value = false;
-  errorMsg.value = "";
+  function idUplClearFile() {
+    file.value = null;
+  }
 
-  try {
-    const reader = new FileReader();
-    const filePromise = new Promise<ArrayBuffer>((resolve, reject) => {
-      reader.onload = (e) => {
-        resolve(e.target!.result as ArrayBuffer);
-      }
-      reader.onerror = (e) => {
-        reject(e.target!.error);
-      }
-    });
-    reader.readAsArrayBuffer(file.value!);
-    const data = Buffer.from(await filePromise);
+  async function idUplLoad() {
+    success.value = false;
+    errorMsg.value = "";
 
     try {
-      const key = await Bill.digest_pwd(passwd.value);
-      const dataDec = Buffer.from(await Bill.decrypt(data, key));
+      const reader = new FileReader();
+      const filePromise = new Promise<ArrayBuffer>((resolve, reject) => {
+        reader.onload = (e) => {
+          resolve(e.target!.result as ArrayBuffer);
+        }
+        reader.onerror = (e) => {
+          reject(e.target!.error);
+        }
+      });
+      reader.readAsArrayBuffer(file.value!);
+      const data = Buffer.from(await filePromise);
 
       try {
-        const identity = await IdentityProcessor.loadIdentity(new BufferReader(dataDec));
-        FileProcessorWrapper.INSTANCE.setIdentity(identity);
-        FileProcessorWrapper.INSTANCE.init();
+        const key = await Bill.digest_pwd(passwd.value);
+        const dataDec = Buffer.from(await Bill.decrypt(data, key));
 
-        success.value = true;
-      }catch (e) {
-        console.error("unable to load identity from file: load failed", e);
-        errorMsg.value = "there was an error while loading the identity (the file seems corrupted)";
+        try {
+          const identity = await IdentityProcessor.loadIdentity(new BufferReader(dataDec));
+          FileProcessorWrapper.INSTANCE.setIdentity(identity);
+          FileProcessorWrapper.INSTANCE.init();
+
+          success.value = true;
+        } catch (e) {
+          console.error("unable to load identity from file: load failed", e);
+          errorMsg.value = "there was an error while loading the identity (the file seems corrupted)";
+        }
+      } catch (e) {
+        console.error("unable to load identity from file: decryption failed", e);
+        errorMsg.value = "there was an error while loading the identity (was the password correct?)";
       }
     } catch (e) {
-      console.error("unable to load identity from file: decryption failed", e);
-      errorMsg.value = "there was an error while loading the identity (was the password correct?)";
+      console.error("unable to load identity from file: open failed", e);
+      errorMsg.value = "there was an error while loading the identity (unable to open the file)";
     }
-  } catch (e) {
-    console.error("unable to load identity from file: open failed", e);
-    errorMsg.value = "there was an error while loading the identity (unable to open the file)";
   }
-}
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 
 </style>

@@ -2,7 +2,7 @@
   <div>
     <Card class="mt-5">
       <template #title>
-        Addendum - {{props.val.title}}
+        Addendum - {{ props.val.title }}
       </template>
       <template #content>
         <div class="p-inputgroup grid mt-1">
@@ -17,7 +17,7 @@
           </div>
           <div class="col p-inputgroup-addon justify-content-start">{{ props.val.author.name }}</div>
         </div>
-        <Panel :toggleable="true" :collapsed="true" class="mt-3">
+        <Panel :collapsed="true" :toggleable="true" class="mt-3">
           <template #title>
             Data
             <!-- TODO download btn -->
@@ -31,12 +31,12 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
   import Card from "primevue/card";
   import Panel from "primevue/panel";
   import type {PropType} from "vue";
-  import type Addendum from "@/processing/model/Addendum";
   import {computed} from "vue";
+  import type Addendum from "@/processing/model/Addendum";
   import {formatDateTime} from "@/ui/utils/utils";
 
   const props = defineProps({
