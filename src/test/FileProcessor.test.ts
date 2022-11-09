@@ -31,6 +31,8 @@ export default [
         const proposalA = processor.getProposal();
         const saved = await processor.saveFile();
 
+        await sleep(10);
+
         await processor.loadFile(new BufferReader(saved));
         const proposalB = processor.getProposal();
 
@@ -60,6 +62,8 @@ export default [
 
         // corrupt data
         saved[102]++;
+
+        await sleep(10);
 
         let ranThrough = false;
         try {
@@ -119,6 +123,7 @@ export default [
         //region save 1
         const save1 = await processor.saveFile();
         processor.clearChanges();
+        await sleep(10);
         //endregion
 
         //region add content 2
@@ -128,6 +133,7 @@ export default [
         //region save patch and save 2
         const save2 = await processor.saveFile();
         const patch = await processor.exportChanges();
+        await sleep(10);
         //endregion
 
         //region load and compare
@@ -148,4 +154,10 @@ async function generateAuthors() {
     for(let i = 0; i < 4; i++)
         authors.push(await IdentityProcessor.toAuthor(await IdentityProcessor.createIdentity("n" + i, "m" + i, null)));
     return authors;
+}
+
+async function sleep(ms: number) {
+    await new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
 }
