@@ -157,15 +157,23 @@ function onDocUpdateChoice(choice: string) {
 
 function onNext() {
   let idx = steps.value.findIndex(s => s.id === currentStep.value) + 1;
+
+  // skip hidden steps
   while(idx < steps.value.length && steps.value[idx].hidden)
     idx++;
+
   if(idx < steps.value.length)
     currentStep.value = steps.value[idx].id;
+  else
+    open.value = false;
 }
 function onBack() {
   let idx = steps.value.findIndex(s => s.id === currentStep.value) - 1;
+
+  // skip hidden steps
   while(idx >= 0 && steps.value[idx].hidden)
     idx--;
+
   if(idx >= 0)
     currentStep.value = steps.value[idx].id;
 }

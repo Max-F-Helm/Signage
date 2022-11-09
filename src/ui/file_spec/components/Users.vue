@@ -1,10 +1,10 @@
 <template>
     <div>
         <Panel header="Users" :toggleable="true">
-            <DataTable :value="users" responsive-layout="scroll">
+            <DataTable :value="data" responsive-layout="scroll">
                 <Column field="name" header="Username"/>
                 <Column field="mail"  header="E-Mail"/>
-                <Column field="public_key" header="Public Key"/>
+                <Column field="publicKey" header="Public Key"/>
             </DataTable>
         </Panel>
     </div>
@@ -14,17 +14,34 @@
     import DataTable from "primevue/datatable";
     import Column from "primevue/column";
     import Panel from "primevue/panel";
-    
-    import UserService from "../service/UserService";
-    import { onMounted, ref } from "@vue/runtime-core";
 
-    const users = ref();
-    const userService = ref(new UserService());
+    import {Buffer} from "buffer";
 
-    onMounted(() => {
-        userService.value.getUsers().then(data => users.value = data);
+    import type {PropType} from "vue";
+    import type Author from "@/processing/model/Author";
+    import {computed} from "vue";
+
+    const props = defineProps({
+      authors: {
+        required: true,
+        type: Array as PropType<Author[]>
+      }
     });
-    
+
+    const data = computed(() => {
+      return props.authors.map(author => {
+        return {
+          name: author.name,
+          mail: author.mail,
+          publicKey: formatPublicKey(author)
+        };
+      });
+    });
+
+    function formatPublicKey(author: Author): string {
+      const bytes = Buffer.from(author.keypair.publicKey);
+      return bytes.toString("hex").toUpperCase();
+    }
 </script>
 
 <style lang="scss">

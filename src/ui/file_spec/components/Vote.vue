@@ -1,59 +1,50 @@
 <template>
-    <div>
-        <Card class="mt-5">
-            <template #title>
-                Vote
-            </template>
-            <template #content>
-                <div class="p-inputgroup mt-1">
-                    <span class="p-inputgroup-addon">
-                        Hash Preview
-                    </span>
-                    <InputText placeholder=""/>
-                </div>
-                <div class="p-inputgroup mt-1">
-                    <span class="p-inputgroup-addon">
-                        Time Stamp
-                    </span>
-                    <InputText placeholder=""/>
-                </div>
-                <Dropdown class="mt-1 w-full" v-model="selectedUser" :options="users" optionLabel="name" optionValue="name" placeholder="Select a user" />
-                <div class="p-inputgroup mt-1">
-                    <span class="p-inputgroup-addon">
-                        Target Hash
-                    </span>
-                    <InputText placeholder=""/>
-                </div>
-                <div class="grid mt-1">
-                    <div class="col-6">
-                        <PButton label="Yes" class="w-full p-button-success" />
-                    </div>
-                    <div class="col-6">
-                        <PButton label="No" class="w-full p-button-danger" />
-                    </div>
-                </div>
-            </template>
-        </Card>
-    </div>
+  <div>
+    <Card class="mt-5"><!-- TODO make header background matching vote (red / green) -->
+      <template #title>
+        Vote - {{props.val.author.name}} ({{props.val.author.mail}})
+      </template>
+      <template #content>
+        <div class="p-inputgroup grid mt-1">
+          <div class="col-2 p-inputgroup-addon">
+            Time Stamp
+          </div>
+          <div class="col p-inputgroup-addon justify-content-start">{{ formattedTimestamp }}</div>
+        </div>
+        <div class="grid p-inputgroup mt-1">
+          <div class="col-2 p-inputgroup-addon">
+            Author
+          </div>
+          <div class="col p-inputgroup-addon justify-content-start">{{props.val.author.name}} ({{props.val.author.mail}})</div>
+        </div>
+        <div class="grid p-inputgroup mt-1">
+          <div class="col-2 p-inputgroup-addon">
+            Vote
+          </div>
+          <div class="col p-inputgroup-addon justify-content-start">{{props.val.vote ? "accepted" : "rejected"}}</div>
+        </div>
+      </template>
+    </Card>
+  </div>
 </template>
 
 <script setup lang="ts">
-    import InputText from 'primevue/inputtext';
-    import PButton from "primevue/button";
-    import Card from "primevue/card";
-    import Dropdown from 'primevue/dropdown';
+  import Card from "primevue/card";
+  import type {PropType} from "vue";
+  import {computed} from "vue";
+  import {formatDateTime} from "@/ui/utils/utils";
+  import type Vote from "@/processing/model/Vote";
 
-    import { onMounted, ref } from "@vue/runtime-core";
-    import UserService from "../service/UserService";
+  const props = defineProps({
+    val: {
+      required: true,
+      type: Object as PropType<Vote>
+    }
+  });
 
-    const selectedUser = ref();
-    const users = ref()
-    const userService = ref(new UserService())
-
-    onMounted(() => {
-        userService.value.getUsers().then(data => users.value = data);
-    });
-
+  const formattedTimestamp = computed(() => {
+    return formatDateTime(props.val.timestamp);
+  });
 </script>
 
 <style lang="scss">

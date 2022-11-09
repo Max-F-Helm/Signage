@@ -1,71 +1,54 @@
 <template>
-    <div>
-        <Card class="mt-5">
-            <template #title>
-                Addendum
-            </template>
-            <template #content>
-                <div class="p-inputgroup mt-1">
-                    <span class="p-inputgroup-addon">
-                        Hash Preview
-                    </span>
-                    <InputText placeholder=""/>
-                </div>
-                <div class="p-inputgroup mt-1">
-                    <span class="p-inputgroup-addon">
-                        Time Stamp
-                    </span>
-                    <InputText placeholder=""/>
-                </div>
-                <Dropdown class="mt-1 w-full" v-model="selectedUser" :options="users" optionLabel="name" optionValue="name" placeholder="Select a user" />
-                <div class="p-inputgroup mt-1">
-                    <span class="p-inputgroup-addon">
-                        Type
-                    </span>
-                    <InputText placeholder=""/>
-                </div>
-                <div class="p-inputgroup mt-1">
-                    <span class="p-inputgroup-addon">
-                        Data Length
-                    </span>
-                    <InputText placeholder=""/>
-                </div>
-                <div class="p-inputgroup mt-1">
-                    <span class="p-inputgroup-addon">
-                        Hash
-                    </span>
-                    <InputText placeholder=""/>
-                </div>
-                <Card class="mt-3">
-                    <template #title>
-                        Data
-                    </template>
-                    <template #content>
-                        Data Preview to be added
-                    </template>
-                </Card>
-            </template>
-        </Card>
-    </div>
+  <div>
+    <Card class="mt-5">
+      <template #title>
+        Addendum - {{props.val.title}}
+      </template>
+      <template #content>
+        <div class="p-inputgroup grid mt-1">
+          <div class="col-2 p-inputgroup-addon">
+            Time Stamp
+          </div>
+          <div class="col p-inputgroup-addon justify-content-start">{{ formattedTimestamp }}</div>
+        </div>
+        <div class="p-inputgroup grid mt-1">
+          <div class="col-2 p-inputgroup-addon">
+            User
+          </div>
+          <div class="col p-inputgroup-addon justify-content-start">{{ props.val.author.name }}</div>
+        </div>
+        <Panel :toggleable="true" :collapsed="true" class="mt-3">
+          <template #title>
+            Data
+            <!-- TODO download btn -->
+          </template>
+          <template #content>
+            Data Preview to be added
+          </template>
+        </Panel>
+      </template>
+    </Card>
+  </div>
 </template>
 
 <script setup lang="ts">
-    import InputText from 'primevue/inputtext';
-    import PButton from "primevue/button";
-    import Card from "primevue/card";
-    import Dropdown from "primevue/dropdown";
+  import Card from "primevue/card";
+  import Panel from "primevue/panel";
+  import type {PropType} from "vue";
+  import type Addendum from "@/processing/model/Addendum";
+  import {computed} from "vue";
+  import {formatDateTime} from "@/ui/utils/utils";
 
-    import { onMounted, ref } from "@vue/runtime-core";
-    import UserService from "../service/UserService";
+  const props = defineProps({
+    val: {
+      required: true,
+      type: Object as PropType<Addendum>
+    }
+  });
 
-    const selectedUser = ref();
-    const users = ref()
-    const userService = ref(new UserService())
-
-    onMounted(() => {
-        userService.value.getUsers().then(data => users.value = data);
-    });
-
+  const formattedTimestamp = computed(() => {
+    return formatDateTime(props.val.timestamp);
+  });
 </script>
 
 <style lang="scss">

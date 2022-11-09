@@ -1,3 +1,6 @@
+// @ts-ignore
+import dateFormat from "dateformat";
+
 export function findParent(element: HTMLElement, withClass: string): HTMLElement | null {
     let parent = element.parentElement;
     while(parent != null) {
@@ -29,4 +32,9 @@ export function download(data: Uint8Array, filename: string) {
     document.body.removeChild(anchor);
 
     URL.revokeObjectURL(url);
+}
+
+export function formatDateTime(time: number): string {
+    const date = new Date(time);
+    return dateFormat(date, "hh:MM dd/mm/yyyy");
 }
