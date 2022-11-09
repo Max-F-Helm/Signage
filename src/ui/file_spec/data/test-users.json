@@ -1,0 +1,12 @@
+{
+    "data": [
+        {"name": "2B",      "mail": "2b@bunker.yorha",       "public_key": "apsiocfnq209e"},
+        {"name": "9S",      "mail": "9s@bunker.yorha",       "public_key": "oufdb208939uz"},
+        {"name": "A2",      "mail": "a2@former.yorha",       "public_key": "1ß092rjhe0812"},
+        {"name": "Pod 042", "mail": "pod042@bunker.yorha",   "public_key": "ß0q9w3ejnr120398"},
+        {"name": "Adam",    "mail": "adam@humanoid.machine", "public_key": "04381nt83r13er1"},
+        {"name": "Eve",     "mail": "eve@humanoid.machine",  "public_key": "ß190hr1028ern1n"},
+        {"name": "Marx",    "mail": "marx@boss.machine",     "public_key": "ß19m2e91jn289012ne"},
+        {"name": "Engels",  "mail": "engels@boss.machine",   "public_key": "1ß39ern1fn131f"}
+    ]
+}
