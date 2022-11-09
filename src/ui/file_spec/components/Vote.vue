@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Card class="mt-5"><!-- TODO make header background matching vote (red / green) -->
+    <Card :class="cardClass">
       <template #title>
         Vote - {{ props.val.author.name }} ({{ props.val.author.mail }})
       </template>
@@ -46,6 +46,11 @@
 
   const formattedTimestamp = computed(() => {
     return formatDateTime(props.val.timestamp);
+  });
+
+  const cardClass = computed(() => {
+    const classes = "mt-1 border-3 ";
+    return classes + (props.val.vote ? "border-green-900" : "border-red-900");
   });
 </script>
 
