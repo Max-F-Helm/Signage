@@ -25,6 +25,10 @@
       <template #od-doc_new>
         <DocNew @update:ready="v => onUpdateStepReady('od-doc_new', v)"></DocNew>
       </template>
+
+      <template #od-doc_new_addendum>
+        <DocInitialAddendum @update:ready="v => onUpdateStepReady('od-doc_new_addendum', v)"></DocInitialAddendum>
+      </template>
     </Steps>
 
     <template #footer>
@@ -50,6 +54,7 @@
   import DocChoice from "@/ui/open_dlg/DocChoice.vue";
   import DocUpload from "@/ui/open_dlg/DocUpload.vue";
   import DocNew from "@/ui/open_dlg/DocNew.vue";
+  import DocInitialAddendum from "@/ui/open_dlg/DocInitialAddendum.vue";
 
   const emit = defineEmits(["update:modelValue"]);
 
@@ -102,6 +107,11 @@
     {
       id: "od-doc_new",
       label: "Create Proposal",
+      hidden: docModeUpl as unknown as boolean
+    },
+    {
+      id: "od-doc_new_addendum",
+      label: "Add Initial Addendum",
       hidden: docModeUpl as unknown as boolean
     }
   ]);
