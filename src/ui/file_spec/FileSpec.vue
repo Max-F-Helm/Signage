@@ -14,8 +14,11 @@
   import type Author from "@/processing/model/Author";
   import type Frame from "@/processing/model/Frame";
   import VoteMenu from "@/ui/file_spec/components/VoteMenu.vue";
+  import debounce from "debounce";
+  import {useToast} from "primevue/usetoast";
 
   const fileProcessor = FileProcessorWrapper.INSTANCE;
+  const toast = useToast();
 
   const authors = ref<Author[]>([]);
   const frames = ref<Frame[]>([]);
@@ -31,12 +34,29 @@
     }
   }
 
+  const errToast = debounce(() => {
+    toast.add({
+      severity: "error",
+      summary: "The Proposal seems corrupted",
+      detail: "for error-details open the browser-console",
+      life: 5000
+    });
+  }, 1000);
+  function onError(e: string) {
+    console.error("error in FileProcessor: ", e);
+    errToast();
+  }
+
   onMounted(() => {
     fileProcessor.addListener(reloadContent);
+    fileProcessor.addErrListener(onError)
     reloadContent();
   });
   onUnmounted(() => {
     fileProcessor.removeListener(reloadContent);
+    fileProcessor.removeErrListener(onError);
+    errToast.flush();
+    errToast.clear();
   });
 </script>
 
