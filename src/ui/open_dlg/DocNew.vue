@@ -39,6 +39,7 @@
   import type Author from "@/processing/model/Author";
   import {Buffer} from "buffer";
   import BufferReader from "@/processing/buffer-reader";
+  import {loadFile} from "@/ui/utils/utils";
 
   const emit = defineEmits(["update:ready"]);
 
@@ -97,18 +98,7 @@
   }
 
   async function loadAuthor(file: File): Promise<Author> {
-    const reader = new FileReader();
-    const filePromise = new Promise<ArrayBuffer>((resolve, reject) => {
-      reader.onload = (e) => {
-        resolve(e.target!.result as ArrayBuffer);
-      }
-      reader.onerror = (e) => {
-        reject(e.target!.error);
-      }
-    });
-    reader.readAsArrayBuffer(file);
-    const data = Buffer.from(await filePromise);
-
+    const data = await loadFile(file);
     return IdentityProcessor.loadAuthor(new BufferReader(data));
   }
 </script>

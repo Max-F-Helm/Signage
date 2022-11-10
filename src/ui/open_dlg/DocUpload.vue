@@ -26,17 +26,18 @@
 <script lang="ts" setup>
   import {computed, ref, watch} from "vue";
   import PButton from "primevue/button";
-  import type {FileUploadRemoveEvent, FileUploadSelectEvent} from "primevue/fileupload";
+  import type {FileUploadSelectEvent} from "primevue/fileupload";
   import Password from "primevue/password";
   import Bill from "@/processing/bill";
   import {Buffer} from "buffer";
   import BufferReader from "@/processing/buffer-reader";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
   import FileUploadLight from "@/ui/open_dlg/FileUploadLight.vue";
+  import {loadFile} from "@/ui/utils/utils";
 
   const emit = defineEmits(["update:ready"]);
 
-  const file = ref<File[]>([]);
+  const file = ref<File | null>(null);
   const passwd = ref("");
   const errorMsg = ref("");
 
@@ -46,15 +47,15 @@
   });
 
   const loadDisabled = computed(() => {
-    return file.value.length !== 1 || passwd.value.length === 0;
+    return file.value !== null || passwd.value.length === 0;
   });
 
   function addFile(e: FileUploadSelectEvent) {
-    file.value = e.files;
+    file.value = e.files[0];
   }
 
-  function delFile(e: FileUploadRemoveEvent) {
-    file.value = e.files;
+  function delFile() {
+    file.value = null;
   }
 
   async function load() {
@@ -62,17 +63,7 @@
     errorMsg.value = "";
 
     try {
-      const reader = new FileReader();
-      const filePromise = new Promise<ArrayBuffer>((resolve, reject) => {
-        reader.onload = (e) => {
-          resolve(e.target!.result as ArrayBuffer);
-        }
-        reader.onerror = (e) => {
-          reject(e.target!.error);
-        }
-      });
-      reader.readAsArrayBuffer(file.value[0]);
-      const data = Buffer.from(await filePromise);
+      const data = await loadFile(file.value!);
 
       try {
         const key = await Bill.digest_pwd(passwd.value);

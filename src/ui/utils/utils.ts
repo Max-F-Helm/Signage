@@ -1,5 +1,6 @@
 // @ts-ignore
 import dateFormat from "dateformat";
+import {Buffer} from "buffer";
 
 export function findParent(element: HTMLElement, withClass: string): HTMLElement | null {
     let parent = element.parentElement;
@@ -37,4 +38,18 @@ export function download(data: Uint8Array, filename: string) {
 export function formatDateTime(time: number): string {
     const date = new Date(time);
     return dateFormat(date, "hh:MM dd/mm/yyyy");
+}
+
+export async function loadFile(file: File): Promise<Buffer> {
+    const reader = new FileReader();
+    const filePromise = new Promise<ArrayBuffer>((resolve, reject) => {
+        reader.onload = (e) => {
+            resolve(e.target!.result as ArrayBuffer);
+        }
+        reader.onerror = (e) => {
+            reject(e.target!.error);
+        }
+    });
+    reader.readAsArrayBuffer(file);
+    return Buffer.from(await filePromise);
 }

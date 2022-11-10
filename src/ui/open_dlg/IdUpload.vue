@@ -34,6 +34,7 @@
   import BufferReader from "@/processing/buffer-reader";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
   import FileUploadLight from "@/ui/open_dlg/FileUploadLight.vue";
+  import {loadFile} from "@/ui/utils/utils";
 
   const emit = defineEmits(["update:ready"]);
 
@@ -63,17 +64,7 @@
     errorMsg.value = "";
 
     try {
-      const reader = new FileReader();
-      const filePromise = new Promise<ArrayBuffer>((resolve, reject) => {
-        reader.onload = (e) => {
-          resolve(e.target!.result as ArrayBuffer);
-        }
-        reader.onerror = (e) => {
-          reject(e.target!.error);
-        }
-      });
-      reader.readAsArrayBuffer(file.value!);
-      const data = Buffer.from(await filePromise);
+      const data = await loadFile(file.value!);
 
       try {
         const key = await Bill.digest_pwd(passwd.value);
