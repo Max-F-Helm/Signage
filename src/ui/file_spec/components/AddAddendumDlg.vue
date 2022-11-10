@@ -1,6 +1,6 @@
 <template>
   <Dialog v-model:visible="open" :closable="false" :modal="true" header="Upload File">
-    <div class="p-inputgroup">
+    <div class="p-inputgroup mb-2">
       <span class="p-inputgroup-addon">
         <i class="pi pi-book"></i>
       </span>

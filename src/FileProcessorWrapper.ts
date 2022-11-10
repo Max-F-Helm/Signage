@@ -135,6 +135,13 @@ export default class FileProcessorWrapper {
         return this.fileProcessor.exportFrames(count);
     }
 
+    clearChanges() {
+        if(this.fileProcessor === null)
+            throw new IllegalStateException("not initialized");
+
+        this.fileProcessor.clearChanges();
+    }
+
     private onErr(msg: string) {
         this.errListeners.forEach(l => l(msg));
     }

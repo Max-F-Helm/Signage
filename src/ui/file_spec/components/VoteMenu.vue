@@ -14,6 +14,15 @@
       </div>
 
       <AddAddendumDlg v-model="showAddDlg" @loaded="onAddDlgLoaded" @error="onAddDlgError"></AddAddendumDlg>
+
+      <Dialog v-model:visible="showSaveDlg" :closable="true" :modal="false" header="Save Changes">
+        Do you want to save the changes?
+        <div class="flex flex-row mt-1">
+          <PButton @click="onSavePatches" class="w-12rem justify-content-center">Save Patchset</PButton>
+          <div class="flex-grow-1 mx-1"></div>
+          <PButton @click="onSaveProposal" class="w-12rem justify-content-center">Save Proposal</PButton>
+        </div>
+      </Dialog>
     </template>
   </Card>
 </template>
@@ -22,8 +31,9 @@
 import PButton from "primevue/button";
 import SplitButton from "primevue/splitbutton";
 import Card from "primevue/card";
+import Dialog from "primevue/dialog";
 import { useToast } from "primevue/usetoast";
-import {onMounted, onUnmounted, ref} from "vue";
+import {onMounted, onUnmounted, ref, watch} from "vue";
 import type {MenuItem} from "primevue/menuitem";
 import FileProcessorWrapper from "@/FileProcessorWrapper";
 import {FrameType} from "@/processing/model/Frame";
@@ -31,6 +41,8 @@ import type Vote from "@/processing/model/Vote";
 import IdentityProcessor from "@/processing/identity-processor";
 import AddAddendumDlg from "@/ui/file_spec/components/AddAddendumDlg.vue";
 import type {NewAddendumData} from "@/ui/file_spec/Helpers";
+import Bill from "@/processing/bill";
+import {download} from "@/ui/utils/utils";
 
 const fileProcessor = FileProcessorWrapper.INSTANCE;
 const toast = useToast();
@@ -45,10 +57,20 @@ const rejectBtnOptions: MenuItem[] = [
 
 const disabled = ref<boolean>(true);
 const showAddDlg = ref<boolean>(false);
+const showSaveDlg = ref<boolean>(false);
+const patchExported = ref<boolean>(false);
+
+watch(showSaveDlg, (showing) => {
+  if(!showing && patchExported.value) {
+    patchExported.value = false;
+    FileProcessorWrapper.INSTANCE.clearChanges();
+  }
+});
 
 function onVoteAccept() {
   try {
     fileProcessor.addVote(true);
+    showSaveDlg.value = true;
   } catch (e: any) {
     showErrToast("Error while performing vote", e);
   }
@@ -57,19 +79,25 @@ function onVoteAccept() {
 function onVoteReject() {
   try {
     fileProcessor.addVote(false);
+    showSaveDlg.value = true;
   } catch (e: any) {
     showErrToast("Error while performing vote", e);
   }
 }
 
 function onVoteRejectAndAddAddendum() {
-  onVoteReject();
-  showAddDlg.value = true;
+  try {
+    fileProcessor.addVote(false);
+    showAddDlg.value = true;
+  } catch (e: any) {
+    showErrToast("Error while performing vote", e);
+  }
 }
 
 function onAddDlgLoaded(data: NewAddendumData) {
   try {
     fileProcessor.addAddendum(data.title, data.mime, data.content);
+    showSaveDlg.value = true;
   } catch (e) {
     showErrToast("Error while adding addendum", e);
   }
@@ -77,6 +105,29 @@ function onAddDlgLoaded(data: NewAddendumData) {
 
 function onAddDlgError(e: any) {
   showErrToast("Error while loading file", e);
+}
+
+async function onSaveProposal() {
+  try {
+    const data = await FileProcessorWrapper.INSTANCE.saveFile();
+    const dataEnc = await Bill.encrypt(data, FileProcessorWrapper.INSTANCE.getKey()!);
+    download(dataEnc, "proposal.sDoc");
+  } catch (e) {
+    console.error("unable to save proposal: saveFile failed", e);
+    showErrToast("Error while saving file", e);
+  }
+}
+
+async function onSavePatches() {
+  try {
+    const data = await FileProcessorWrapper.INSTANCE.exportChanges();
+    const dataEnc = await Bill.encrypt(data, FileProcessorWrapper.INSTANCE.getKey()!);
+    download(dataEnc, "changes.sPatch");
+    patchExported.value = true;
+  } catch (e) {
+    console.error("unable to save proposal: saveFile failed", e);
+    showErrToast("Error while saving file", e);
+  }
 }
 
 function showErrToast(summary: string, e: any) {
