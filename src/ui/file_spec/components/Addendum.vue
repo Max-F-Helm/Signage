@@ -17,14 +17,18 @@
           </div>
           <div class="col p-inputgroup-addon justify-content-start">{{ props.val.author.name }}</div>
         </div>
+
         <Panel :collapsed="true" :toggleable="true" class="mt-3">
-          <template #title>
+          <template #header>
             Data
-            <!-- TODO download btn -->
           </template>
-          <template #content>
+          <template #icons>
+            <PButton class="p-panel-header-icon mr-2" @click="onDownload">
+              <span class="pi pi-cloud-download"></span>
+            </PButton>
+          </template>
+
             Data Preview to be added
-          </template>
         </Panel>
       </template>
     </Card>
@@ -34,10 +38,11 @@
 <script lang="ts" setup>
   import Card from "primevue/card";
   import Panel from "primevue/panel";
+  import PButton from "primevue/button";
   import type {PropType} from "vue";
   import {computed} from "vue";
   import type Addendum from "@/processing/model/Addendum";
-  import {formatDateTime} from "@/ui/utils/utils";
+  import {download, formatDateTime} from "@/ui/utils/utils";
 
   const props = defineProps({
     val: {
@@ -49,6 +54,11 @@
   const formattedTimestamp = computed(() => {
     return formatDateTime(props.val.timestamp);
   });
+
+  function onDownload() {
+    //TODO infer file-extension from mime (if title has no extension)
+    download(props.val.data, props.val.title);
+  }
 </script>
 
 <style lang="scss">
