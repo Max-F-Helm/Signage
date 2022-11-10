@@ -74,66 +74,61 @@ export default class FileProcessorWrapper {
         return this.fileProcessor.getProposal();
     }
 
-    createFile(authors: Author[]) {
+    async createFile(authors: Author[]) {
         if(this.fileProcessor === null)
             throw new IllegalStateException("not initialized");
 
-        (async () => {
-            await this.fileProcessor!.createFile(authors);
-        })().then(() => this.onUpdated());
+        await this.fileProcessor.createFile(authors);
+        this.onUpdated();
     }
 
-    loadFile(data: BufferReader) {
+    async loadFile(data: BufferReader) {
         if(this.fileProcessor === null)
             throw new IllegalStateException("not initialized");
 
-        (async () => {
-            await this.fileProcessor!.loadFile(data);
-        })().then(() => this.onUpdated());
+        await this.fileProcessor.loadFile(data);
+        this.onUpdated();
     }
 
-    saveFile(): Promise<Buffer> {
+    async saveFile(): Promise<Buffer> {
         if(this.fileProcessor === null)
             throw new IllegalStateException("not initialized");
 
-        return this.fileProcessor!.saveFile();
+        return this.fileProcessor.saveFile();
     }
 
-    addAddendum(title: string, mime: string, content: Buffer) {
+    async addAddendum(title: string, mime: string, content: Buffer) {
         if(this.fileProcessor === null)
             throw new IllegalStateException("not initialized");
 
-        (async () => {
-            await this.fileProcessor!.addAddendum(title, mime, content);
-        })().then(() => this.onUpdated());
+        await this.fileProcessor.addAddendum(title, mime, content);
+        this.onUpdated();
     }
 
-    addVote(vote: boolean) {
+    async addVote(vote: boolean) {
         if(this.fileProcessor === null)
             throw new IllegalStateException("not initialized");
 
-        (async () => {
-            await this.fileProcessor!.addVote(vote);
-        })().then(() => this.onUpdated());
+        await this.fileProcessor.addVote(vote);
+        this.onUpdated();
     }
 
-    importPatchSet(data: BufferReader) {
+    async importPatchSet(data: BufferReader) {
         if(this.fileProcessor === null)
             throw new IllegalStateException("not initialized");
 
-        (async () => {
-            await this.fileProcessor!.importPatchSet(data);
-        })().then(() => this.onUpdated());
+        await this.fileProcessor.importPatchSet(data);
+        this.onUpdated();
     }
 
-    exportChanges(): Promise<Buffer> {
+    async exportChanges(): Promise<Buffer> {
         if(this.fileProcessor === null)
             throw new IllegalStateException("not initialized");
 
         return this.fileProcessor.exportChanges();
     }
 
-    exportFrames(count: number): Promise<Buffer> {
+    async exportFrames(count: number): Promise<Buffer> {
         if(this.fileProcessor === null)
             throw new IllegalStateException("not initialized");
 
