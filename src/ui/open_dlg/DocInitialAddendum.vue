@@ -16,7 +16,7 @@
     {{ errorMsg }}
   </div>
   <div v-show="ready" class="p-inline-message p-inline-message-success">
-    Addendum added.
+    Addendum added. Please save it to a file.
   </div>
 
   <div>
@@ -32,8 +32,9 @@
   import InputText from "primevue/inputtext";
   import FileUploadLight from "@/ui/open_dlg/FileUploadLight.vue";
   import type {FileUploadSelectEvent} from "primevue/fileupload";
-  import {loadFile, sniffMime} from "@/ui/utils/utils";
+  import {download, loadFile, sniffMime} from "@/ui/utils/utils";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
+  import Bill from "@/processing/bill";
 
   const emit = defineEmits(["update:ready"]);
 
@@ -68,8 +69,18 @@
       const mime = sniffMime(file.value!!, data);
 
       try {
-        FileProcessorWrapper.INSTANCE.addAddendum(title.value, mime, data);
-        ready.value = true;
+        await FileProcessorWrapper.INSTANCE.addAddendum(title.value, mime, data);
+
+        try {
+          const data = await FileProcessorWrapper.INSTANCE.saveFile();
+          const dataEnc = await Bill.encrypt(data, FileProcessorWrapper.INSTANCE.getKey()!);
+          download(dataEnc, "proposal.sDoc");
+
+          ready.value = true;
+        } catch (e) {
+          console.error("unable to save proposal: saveFile failed", e);
+          errorMsg.value = "there was an error while adding the addendum (unable to save the proposal)";
+        }
       } catch (e) {
         console.error("unable to add addendum: add failed", e);
         errorMsg.value = "there was an error while adding the addendum (unable to add the file)";
