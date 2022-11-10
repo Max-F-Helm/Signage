@@ -2,9 +2,9 @@
   <Dialog v-model:visible="open" :closable="false" :modal="true" header="Upload File">
     <div class="p-inputgroup">
       <span class="p-inputgroup-addon">
-        Title
+        <i class="pi pi-book"></i>
       </span>
-      <InputText v-model="title"></InputText>
+      <InputText v-model="title" placeholder="Title"></InputText>
     </div>
 
     <FileUploadLight @remove="clearFile" @select="setFile"></FileUploadLight>

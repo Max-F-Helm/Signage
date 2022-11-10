@@ -7,7 +7,7 @@
     <template #content>
       <div class="flex flex-row">
         <PButton @click="onVoteAccept" :disabled="disabled"
-                 icon="pi pi-check" class="p-button-success flex-grow-1">Accept</PButton>
+                 icon="pi pi-check" class="p-button-success flex-grow-1 mr-1">Accept</PButton>
         <SplitButton @click="onVoteReject" :disabled="disabled"
                      label="Reject" icon="pi pi-times"
                      :model="rejectBtnOptions" class="p-button-danger flex-grow-1"></SplitButton>
