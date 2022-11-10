@@ -407,7 +407,7 @@ export class FileProcessor {
 
         data.writeUint8Array(frame.prevFrameHash);
         data.writeUIntBE(frame.timestamp, TIMESTAMP_BYTES);
-        data.writeUInt16BE(this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, this.author!.keypair.publicKey)));
+        data.writeUInt16BE(this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, frame.author.keypair.publicKey)));
         data.writeStringUtf8(frame.title);
         data.writeStringUtf8(frame.type);
         data.writeUInt32BE(frame.data.byteLength);
@@ -418,7 +418,7 @@ export class FileProcessor {
     private async writeVoteFrame(data: BufferWriter, frame: Vote) {
         data.writeUint8Array(frame.prevFrameHash);
         data.writeUIntBE(frame.timestamp, TIMESTAMP_BYTES);
-        data.writeUInt16BE(this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, this.author!.keypair.publicKey)));
+        data.writeUInt16BE(this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, frame.author.keypair.publicKey)));
         data.writeUint8Array(frame.targetAddendumHash);
         data.writeInt8(frame.vote ? 1 : 0);
         data.writeUint8Array(frame.hash);

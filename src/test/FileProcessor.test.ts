@@ -31,6 +31,7 @@ export default [
         const proposalA = processor.getProposal();
         const saved = await processor.saveFile();
 
+        // to make sure that clock is in future when checks are run in loadFile()
         await sleep(10);
 
         await processor.loadFile(new BufferReader(saved));
@@ -104,10 +105,11 @@ export default [
             should(false).true("error was reported: " + msg);
         };
 
-        const identity = await IdentityProcessor.createIdentity("a", "b", null);
-        const authors = [await IdentityProcessor.toAuthor(identity)];
+        const identity1 = await IdentityProcessor.createIdentity("a", "b", null);
+        const identity2 = await IdentityProcessor.createIdentity("a2", "b2", null);
+        const authors = [await IdentityProcessor.toAuthor(identity1), await IdentityProcessor.toAuthor(identity2)];
 
-        const processor = new FileProcessor(identity, errorCallback);
+        let processor = new FileProcessor(identity1, errorCallback);
 
         await processor.createFile(authors);
         //endregion
@@ -122,11 +124,13 @@ export default [
 
         //region save 1
         const save1 = await processor.saveFile();
-        processor.clearChanges();
         await sleep(10);
         //endregion
 
         //region add content 2
+        processor = new FileProcessor(identity2, errorCallback);
+        await processor.loadFile(new BufferReader(save1));
+
         await processor.addAddendum(addendumTitle + "-2", addendumMime, addendumContent);
         //endregion
 
