@@ -5,6 +5,7 @@ import router from './router';
 import { UidPlugin } from '@shimyshack/uid';
 
 import PrimeVue from 'primevue/config';
+import ToastService from 'primevue/toastservice';
 
 import './assets/main.css';
 
@@ -20,7 +21,8 @@ const app = createApp(App);
 
 app.use(router);
 app.use(PrimeVue);
-app.use(UidPlugin)
+app.use(ToastService);
+app.use(UidPlugin);
 
 app.mount('#app');
 

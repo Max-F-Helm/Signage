@@ -2,8 +2,7 @@
   <div>
     <Users :authors="authors"></Users>
     <Contents :frames="frames"></Contents>
-
-    <!-- TODO vote menu -->
+    <VoteMenu></VoteMenu>
   </div>
 </template>
 
@@ -14,6 +13,7 @@
   import FileProcessorWrapper from "@/FileProcessorWrapper";
   import type Author from "@/processing/model/Author";
   import type Frame from "@/processing/model/Frame";
+  import VoteMenu from "@/ui/file_spec/components/VoteMenu.vue";
 
   const fileProcessor = FileProcessorWrapper.INSTANCE;
 
