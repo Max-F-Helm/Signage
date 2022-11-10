@@ -37,7 +37,6 @@
   import type {FileUploadRemoveEvent, FileUploadSelectEvent} from "primevue/fileupload";
   import FileUpload from "primevue/fileupload";
   import type Author from "@/processing/model/Author";
-  import {Buffer} from "buffer";
   import BufferReader from "@/processing/buffer-reader";
   import {loadFile} from "@/ui/utils/utils";
 

@@ -47,7 +47,7 @@
   });
 
   const loadDisabled = computed(() => {
-    return file.value !== null || passwd.value.length === 0;
+    return file.value === null || passwd.value.length === 0;
   });
 
   function addFile(e: FileUploadSelectEvent) {
