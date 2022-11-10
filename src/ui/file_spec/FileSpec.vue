@@ -23,8 +23,8 @@
   function reloadContent() {
     if (fileProcessor.isFileLoaded()) {
       const proposal = fileProcessor.getProposal();
-      authors.value = proposal.authors;
-      frames.value = proposal.frames;
+      authors.value = [...proposal.authors];
+      frames.value = [...proposal.frames];
     } else {
       authors.value = [];
       frames.value = [];
