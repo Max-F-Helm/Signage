@@ -4,7 +4,21 @@
       Authors (excluding yourself):
       <FileUpload :fileLimit="32767" :multiple="true" :showCancelButton="false"
                   :showUploadButton="false" mode="advanced"
-                  @remove="delAuthorFile" @select="addAuthorFile"></FileUpload>
+                  @remove="delAuthorFile" @select="addAuthorFile">
+        <template #content="{ files, uploadedFiles, removeFileCallback }">
+          <div v-if="files.length > 0">
+            <div class="flex flex-wrap p-1">
+              <div v-for="(file, index) of files" :key="file.name + file.type + file.size"
+                   class="card flex flex-row mb-1 p-2 border-1 surface-border align-items-center w-full">
+                <span class="font-semibold">{{ file.name }}</span>
+                <div class="flex-grow-1"></div>
+                <PButton icon="pi pi-times" @click="removeFileCallback(index)"
+                         class="p-button-outlined p-button-danger p-button-rounded"></PButton>
+              </div>
+            </div>
+          </div>
+        </template>
+      </FileUpload>
     </div>
     <div class="p-inputgroup">
       <span class="p-inputgroup-addon">
