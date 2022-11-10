@@ -5,13 +5,13 @@
         Addendum - {{ props.val.title }}
       </template>
       <template #content>
-        <div class="p-inputgroup grid mt-1">
+        <div class="p-inputgroup grid mx-0 mt-1">
           <div class="col-2 p-inputgroup-addon">
             Time Stamp
           </div>
           <div class="col p-inputgroup-addon justify-content-start">{{ formattedTimestamp }}</div>
         </div>
-        <div class="p-inputgroup grid mt-1">
+        <div class="p-inputgroup grid mx-0 mt-1">
           <div class="col-2 p-inputgroup-addon">
             User
           </div>

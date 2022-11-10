@@ -5,13 +5,13 @@
         Vote - {{ props.val.author.name }} ({{ props.val.author.mail }})
       </template>
       <template #content>
-        <div class="p-inputgroup grid mt-1">
+        <div class="p-inputgroup grid mx-0 mt-1">
           <div class="col-2 p-inputgroup-addon">
             Time Stamp
           </div>
           <div class="col p-inputgroup-addon justify-content-start">{{ formattedTimestamp }}</div>
         </div>
-        <div class="grid p-inputgroup mt-1">
+        <div class="grid p-inputgroup mx-0 mt-1">
           <div class="col-2 p-inputgroup-addon">
             Author
           </div>
@@ -19,7 +19,7 @@
             ({{ props.val.author.mail }})
           </div>
         </div>
-        <div class="grid p-inputgroup mt-1">
+        <div class="grid p-inputgroup mx-0 mt-1">
           <div class="col-2 p-inputgroup-addon">
             Vote
           </div>
