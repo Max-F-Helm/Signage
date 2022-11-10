@@ -75,7 +75,12 @@
       await IdentityProcessor.saveIdentity(writer, identity);
       const dataEnc = await Bill.encrypt(writer.take(), key);
 
-      download(dataEnc, "identity.sIden");
+      writer.setPositionAbs(0);
+      await IdentityProcessor.saveAuthor(writer, await IdentityProcessor.toAuthor(identity));
+      const author = writer.take();
+
+      download(dataEnc, "identity.sIdn");
+      download(author, "author.sAut");
 
       FileProcessorWrapper.INSTANCE.setIdentity(identity);
       FileProcessorWrapper.INSTANCE.init();
