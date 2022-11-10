@@ -26,10 +26,9 @@ import PButton from "primevue/button";
 import InputText from "primevue/inputtext";
 import Dialog from "primevue/dialog";
 import FileUploadLight from "@/ui/open_dlg/FileUploadLight.vue";
-import {fileTypeFromBuffer} from "file-type";
 import type {FileUploadSelectEvent} from "primevue/fileupload";
 import type {NewAddendumData} from "@/ui/file_spec/Helpers";
-import {loadFile} from "@/ui/utils/utils";
+import {loadFile, sniffMime} from "@/ui/utils/utils";
 
 const emit = defineEmits(["update:modelValue", "loaded", "error"]);
 
@@ -67,14 +66,7 @@ function onCancel() {
 async function onUpload() {
   try {
     const data = await loadFile(file.value!);
-
-    const sniffedMime = await fileTypeFromBuffer(data);
-    let mime: string;
-    if(sniffedMime !== undefined) {
-      mime = sniffedMime.mime;
-    } else {
-      mime = file.value!.type;
-    }
+    const mime = sniffMime(file.value!!, data);
 
     emit("loaded", {
       title: title.value,

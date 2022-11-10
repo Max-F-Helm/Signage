@@ -1,6 +1,7 @@
 // @ts-ignore
 import dateFormat from "dateformat";
 import {Buffer} from "buffer";
+import filetype from "magic-bytes.js";
 
 export function findParent(element: HTMLElement, withClass: string): HTMLElement | null {
     let parent = element.parentElement;
@@ -52,4 +53,19 @@ export async function loadFile(file: File): Promise<Buffer> {
     });
     reader.readAsArrayBuffer(file);
     return Buffer.from(await filePromise);
+}
+
+export function sniffMime(file: File, fileData: Buffer): string {
+    let mime: string = "";
+    const sniffedMime = filetype(fileData);
+    for(const m of sniffedMime) {
+        if(m.mime !== undefined) {
+            mime = m.mime;
+            break;
+        }
+    }
+    if(mime === "") {
+        mime = file.type;
+    }
+    return mime;
 }

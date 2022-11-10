@@ -32,10 +32,8 @@
   import InputText from "primevue/inputtext";
   import FileUploadLight from "@/ui/open_dlg/FileUploadLight.vue";
   import type {FileUploadSelectEvent} from "primevue/fileupload";
-  import {Buffer} from "buffer";
-  import {loadFile} from "@/ui/utils/utils";
+  import {loadFile, sniffMime} from "@/ui/utils/utils";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
-  import {fileTypeFromBuffer} from "file-type";
 
   const emit = defineEmits(["update:ready"]);
 
@@ -67,14 +65,7 @@
 
     try {
       const data = await loadFile(file.value!);
-
-      const sniffedMime = await fileTypeFromBuffer(data);
-      let mime: string;
-      if(sniffedMime !== undefined) {
-        mime = sniffedMime.mime;
-      } else {
-        mime = file.value!.type;
-      }
+      const mime = sniffMime(file.value!!, data);
 
       try {
         FileProcessorWrapper.INSTANCE.addAddendum(title.value, mime, data);
