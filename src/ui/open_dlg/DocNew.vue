@@ -24,7 +24,8 @@
       <span class="p-inputgroup-addon">
         <i class="pi pi-lock"></i>
       </span>
-      <Password v-model="passwd" :feedback="false" placeholder="Password"/>
+      <Password v-model="passwd" :feedback="false" placeholder="Password" ref="refPasswdInp"
+                @keyup.enter="onPasswdInpEnter"/>
     </div>
 
     <div v-show="errorMsg.length !== 0" class=" p-inline-message p-inline-message-error">
@@ -59,9 +60,11 @@
   const authors = ref<File[]>([]);
   const passwd = ref("");
   const errorMsg = ref("");
+  const refPasswdInp = ref();
 
   function addAuthorFile(e: FileUploadSelectEvent) {
     authors.value = e.files;
+    refPasswdInp.value?.$refs.input.$el.focus();
   }
 
   function delAuthorFile(e: FileUploadRemoveEvent) {
@@ -77,6 +80,11 @@
   watch(ready, () => {
     emit("update:ready", ready.value);
   });
+
+  async function onPasswdInpEnter() {
+    if(valid.value)
+      await onCreate();
+  }
 
   async function onCreate() {
     ready.value = false;

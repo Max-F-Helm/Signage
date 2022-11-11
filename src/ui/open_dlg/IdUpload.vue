@@ -1,16 +1,17 @@
 <template>
   <div class="flex flex-column row-gap-3">
     <div>
-      <FileUploadLight @remove="idUplClearFile" @select="idUplSetFile"></FileUploadLight>
+      <FileUploadLight @remove="clearFile" @select="setFile"></FileUploadLight>
     </div>
     <div class="p-inputgroup">
             <span class="p-inputgroup-addon">
               <i class="pi pi-lock"></i>
             </span>
-      <Password v-model="passwd" :feedback="false" placeholder="Password"/>
+      <Password v-model="passwd" :feedback="false" placeholder="Password" ref="refPasswdInp"
+                @keyup.enter="onPasswdImpEnter"/>
     </div>
     <div>
-      <PButton :disabled="idUplLoadDisabled" @click="idUplLoad">Load</PButton>
+      <PButton :disabled="loadDisabled" @click="load">Load</PButton>
       <div class="flex-grow-1"></div>
     </div>
 
@@ -41,25 +42,32 @@
   const file = ref<File | null>(null);
   const passwd = ref("");
   const errorMsg = ref("");
+  const refPasswdInp = ref();
 
   const success = ref(false);
   watch(success, () => {
     emit("update:ready", success.value);
   });
 
-  const idUplLoadDisabled = computed(() => {
+  const loadDisabled = computed(() => {
     return file.value === null || passwd.value.length === 0;
   });
 
-  function idUplSetFile(e: FileUploadSelectEvent) {
+  function setFile(e: FileUploadSelectEvent) {
     file.value = e.files[0];
+    refPasswdInp.value?.$refs.input.$el.focus();
   }
 
-  function idUplClearFile() {
+  function clearFile() {
     file.value = null;
   }
 
-  async function idUplLoad() {
+  async function onPasswdImpEnter() {
+    if(!loadDisabled.value)
+      await load();
+  }
+
+  async function load() {
     success.value = false;
     errorMsg.value = "";
 

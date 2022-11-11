@@ -130,6 +130,7 @@
 
   function onUpdateStepReady(stepId: string, valid: boolean) {
     stepReady.value[stepId] = valid;
+    onNext();
   }
 
   function onIdUpdateChoice(choice: string) {

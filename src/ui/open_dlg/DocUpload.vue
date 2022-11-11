@@ -7,7 +7,8 @@
             <span class="p-inputgroup-addon">
               <i class="pi pi-lock"></i>
             </span>
-      <Password v-model="passwd" :feedback="false" placeholder="Password"/>
+      <Password v-model="passwd" :feedback="false" placeholder="Password" ref="refPasswdInp"
+                @keyup.enter="onPasswdInpEnter"/>
     </div>
     <div>
       <PButton :disabled="loadDisabled" @click="load">Load</PButton>
@@ -40,6 +41,7 @@
   const file = ref<File | null>(null);
   const passwd = ref("");
   const errorMsg = ref("");
+  const refPasswdInp = ref();
 
   const success = ref(false);
   watch(success, () => {
@@ -52,10 +54,16 @@
 
   function addFile(e: FileUploadSelectEvent) {
     file.value = e.files[0];
+    refPasswdInp.value?.$refs.input.$el.focus();
   }
 
   function delFile() {
     file.value = null;
+  }
+
+  async function onPasswdInpEnter() {
+    if(!loadDisabled.value)
+      await load();
   }
 
   async function load() {
