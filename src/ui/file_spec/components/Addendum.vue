@@ -35,7 +35,7 @@
             <Image :src="asBlob()" alt="invalid image" :preview="true" imageClass="max-h-24rem"></Image>
           </div>
           <div v-else-if="isPdf">
-            <!-- TODO -->
+            <iframe :src="asBlob()" class="pdfViewer"></iframe>
           </div>
           <div v-else class="flex justify-content-center font-bold text-xl">
             No preview available
@@ -71,8 +71,12 @@
   const isText = computed(() => {
     const mime = props.val.type;
     return mime.startsWith("text/")
-        || mime.startsWith("application/xml");
-    //TODO add more text-like types
+        || mime.startsWith("application/xml")
+        || mime.startsWith("application/json")
+        || mime.startsWith("application/ld+json")
+        || mime.startsWith("application/x-httpd-php")
+        || mime.startsWith("application/x-sh")
+        || mime.startsWith("application/xhtml+xml");
   });
   const isImage = computed(() => {
     const mime = props.val.type;
@@ -100,5 +104,12 @@
 </script>
 
 <style lang="scss">
+  @import "primeflex/primeflex";
 
+  .pdfViewer {
+    @extend .w-full;
+    @extend .mx-2;
+
+    height: 90vh;
+  }
 </style>
