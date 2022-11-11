@@ -86,24 +86,28 @@ function onVoteReject() {
 }
 
 function onVoteRejectAndAddAddendum() {
-  try {
-    fileProcessor.addVote(false);
-    showAddDlg.value = true;
-  } catch (e: any) {
-    showErrToast("Error while performing vote", e);
-  }
+  showAddDlg.value = true;
 }
 
 function onAddDlgLoaded(data: NewAddendumData) {
   try {
-    fileProcessor.addAddendum(data.title, data.mime, data.content);
-    showSaveDlg.value = true;
+    fileProcessor.addVote(false);
+
+    try {
+      fileProcessor.addAddendum(data.title, data.mime, data.content);
+      showSaveDlg.value = true;
+    } catch (e) {
+      console.error("Error while adding addendum", e);
+      showErrToast("Error while adding addendum", e);
+    }
   } catch (e) {
-    showErrToast("Error while adding addendum", e);
+    console.error("Error while performing vote", e);
+    showErrToast("Error while performing vote", e);
   }
 }
 
 function onAddDlgError(e: any) {
+  console.error("Error while loading file", e);
   showErrToast("Error while loading file", e);
 }
 
