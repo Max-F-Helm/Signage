@@ -1,6 +1,10 @@
 <template>
   <div class="flex flex-column row-gap-3">
     <div>
+      <RadioButton v-model="choice" inputId="idChoice_mode_upl" name="idChoice_mode" value="storage"/>
+      <label class="ml-2" for="idChoice_mode_upl">Select Stored</label>
+    </div>
+    <div>
       <RadioButton v-model="choice" inputId="idChoice_mode_upl" name="idChoice_mode" value="upload"/>
       <label class="ml-2" for="idChoice_mode_upl">Upload</label>
     </div>
@@ -17,7 +21,7 @@
 
   const emit = defineEmits(["update:choice"]);
 
-  const choice = ref("upload");
+  const choice = ref("storage");
 
   watch(choice, () => {
     emit("update:choice", choice.value);

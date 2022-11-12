@@ -6,6 +6,10 @@
         <IdChoice @update:choice="onIdUpdateChoice"></IdChoice>
       </template>
 
+      <template #od-id_sto>
+        <IdStorage @update:ready="v => onUpdateStepReady('od-id_sto', v)"></IdStorage>
+      </template>
+
       <template #od-id_upl>
         <IdUpload @update:ready="v => onUpdateStepReady('od-id_upl', v)"></IdUpload>
       </template>
@@ -55,6 +59,7 @@
   import DocUpload from "@/ui/open_dlg/DocUpload.vue";
   import DocNew from "@/ui/open_dlg/DocNew.vue";
   import DocInitialAddendum from "@/ui/open_dlg/DocInitialAddendum.vue";
+  import IdStorage from "@/ui/open_dlg/IdStorage.vue";
 
   const emit = defineEmits(["update:modelValue"]);
 
@@ -74,47 +79,55 @@
     }
   });
 
+  const idModeStorage = ref(false);
   const idModeUpl = ref(false);
   const idModeNew = ref(false);
   const docModeUpl = ref(false);
   const docModeNew = ref(false);
 
   const currentStep = ref("od-id_choice");
-  const steps = ref<StepsItem[]>([
-    {
-      id: "od-id_choice",
-      label: "Identity Source"
-    },
-    {
-      id: "od-id_upl",
-      label: "Open Identity",
-      hidden: idModeNew as unknown as boolean
-    },
-    {
-      id: "od-id_new",
-      label: "Create Identity",
-      hidden: idModeUpl as unknown as boolean
-    },
-    {
-      id: "od-doc_choice",
-      label: "Proposal Source"
-    },
-    {
-      id: "od-doc_upl",
-      label: "Open Proposal",
-      hidden: docModeNew as unknown as boolean
-    },
-    {
-      id: "od-doc_new",
-      label: "Create Proposal",
-      hidden: docModeUpl as unknown as boolean
-    },
-    {
-      id: "od-doc_new_addendum",
-      label: "Add Initial Addendum",
-      hidden: docModeUpl as unknown as boolean
-    }
-  ]);
+  const steps = computed<StepsItem[]>(() => {
+    return [
+      {
+        id: "od-id_choice",
+        label: "Identity Source"
+      },
+      {
+        id: "od-id_sto",
+        label: "Select Identity",
+        hidden: idModeNew.value || idModeUpl.value
+      },
+      {
+        id: "od-id_upl",
+        label: "Open Identity",
+        hidden: idModeNew.value || idModeStorage.value
+      },
+      {
+        id: "od-id_new",
+        label: "Create Identity",
+        hidden: idModeUpl.value || idModeStorage.value
+      },
+      {
+        id: "od-doc_choice",
+        label: "Proposal Source"
+      },
+      {
+        id: "od-doc_upl",
+        label: "Open Proposal",
+        hidden: docModeNew.value
+      },
+      {
+        id: "od-doc_new",
+        label: "Create Proposal",
+        hidden: docModeUpl.value
+      },
+      {
+        id: "od-doc_new_addendum",
+        label: "Add Initial Addendum",
+        hidden: docModeUpl.value
+      }
+    ]
+  });
 
   const stepReady = ref<Record<string, boolean>>(fold(steps.value, {}, (obj: Record<string, boolean>, step) => {
     obj[step.id] = false;
@@ -136,11 +149,18 @@
 
   function onIdUpdateChoice(choice: string) {
     switch (choice) {
+      case "storage":
+        idModeStorage.value = true;
+        idModeUpl.value = false;
+        idModeNew.value = false;
+        break;
       case "upload":
+        idModeStorage.value = false;
         idModeUpl.value = true;
         idModeNew.value = false;
         break;
       case "new":
+        idModeStorage.value = false;
         idModeUpl.value = false;
         idModeNew.value = true;
         break;
