@@ -20,20 +20,13 @@
     </div>
 
     <div class="flex">
-      <div class="p-inputgroup w-fit mr-1">
-        <div class="p-inputgroup-addon h-full">
-          Save in Browser-Storage
-        </div>
-        <div class="p-inputgroup-addon h-full">
-          <Checkbox v-model="saveToStorage" :binary="true"/>
-        </div>
+      <div class="p-inputgroup-addon">
+        <Checkbox v-model="saveToStorage" :binary="true" inputId="idNew_storage"/>
+        <label for="idNew_storage" class="ml-1">Save in Browser-Storage</label>
       </div>
-      <div class="p-inputgroup w-fit">
-        <span class="p-inputgroup-addon h-full">
-          Save encrypted
-        </span>
-        <Checkbox v-model="saveToStorageEnc" :binary="true" :disabled="!saveToStorage"
-                  class="p-inputgroup-addon h-full"/>
+      <div class="p-inputgroup-addon">
+        <Checkbox v-model="saveToStorageEnc" :binary="true" :disabled="!saveToStorage" inputId="idNew_storage_enc"/>
+        <label for="idNew_storage_enc" class="ml-1">Save encrypted</label>
       </div>
     </div>
 

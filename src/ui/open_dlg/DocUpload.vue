@@ -4,32 +4,27 @@
       <FileUploadLight @remove="delFile" @select="addFile"></FileUploadLight>
     </div>
     <div class="p-inputgroup">
-            <span class="p-inputgroup-addon">
-              <i class="pi pi-lock"></i>
-            </span>
+      <span class="p-inputgroup-addon">
+        <i class="pi pi-lock"></i>
+      </span>
       <Password v-model="passwd" :feedback="false" placeholder="Password" ref="refPasswdInp"
                 @keyup.enter="onPasswdInpEnter"/>
     </div>
 
     <div class="flex">
-      <div class="p-inputgroup w-fit mr-1">
-        <div class="p-inputgroup-addon h-full">
-          Save in Browser-Storage
-        </div>
-        <div class="p-inputgroup-addon h-full">
-          <Checkbox v-model="saveToStorage" :binary="true"/>
-        </div>
+      <div class="p-inputgroup-addon">
+        <Checkbox v-model="saveToStorage" :binary="true" inputId="docUpl_storage"/>
+        <label for="docUpl_storage" class="ml-1">Save in Browser-Storage</label>
       </div>
-      <div class="p-inputgroup w-fit mr-1">
-        <span class="p-inputgroup-addon h-full">
-          Save encrypted
+      <div class="p-inputgroup-addon">
+        <Checkbox v-model="saveToStorageEnc" :binary="true" :disabled="!saveToStorage" inputId="docUpl_storage_enc"/>
+        <label for="docUpl_storage_enc" class="ml-1">Save encrypted</label>
+      </div>
+      <div class="p-inputgroup-addon p-0 w-6">
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-file"></i>
+          <InputText v-model="saveToStorageName" placeholder="Name" class="border-0 w-full"/>
         </span>
-        <Checkbox v-model="saveToStorageEnc" :binary="true" :disabled="!saveToStorage"
-                  class="p-inputgroup-addon h-full"/>
-      </div>
-      <div class="p-inputgroup w-6 mr-2">
-        <span class="p-inputgroup-addon pi pi-file"></span>
-        <InputText v-model="saveToStorageName" placeholder="Name"/>
       </div>
     </div>
 
