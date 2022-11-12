@@ -10,6 +10,29 @@
       <Password v-model="passwd" :feedback="false" placeholder="Password" ref="refPasswdInp"
                 @keyup.enter="onPasswdInpEnter"/>
     </div>
+
+    <div class="flex">
+      <div class="p-inputgroup w-fit mr-1">
+        <div class="p-inputgroup-addon h-full">
+          Save in Browser-Storage
+        </div>
+        <div class="p-inputgroup-addon h-full">
+          <Checkbox v-model="saveToStorage" :binary="true"/>
+        </div>
+      </div>
+      <div class="p-inputgroup w-fit mr-1">
+        <span class="p-inputgroup-addon h-full">
+          Save encrypted
+        </span>
+        <Checkbox v-model="saveToStorageEnc" :binary="true" :disabled="!saveToStorage"
+                  class="p-inputgroup-addon h-full"/>
+      </div>
+      <div class="p-inputgroup w-6 mr-2">
+        <span class="p-inputgroup-addon pi pi-file"></span>
+        <InputText v-model="saveToStorageName" placeholder="Name"/>
+      </div>
+    </div>
+
     <div>
       <PButton :disabled="loadDisabled" @click="load">Load</PButton>
       <div class="flex-grow-1"></div>
@@ -27,6 +50,8 @@
 <script lang="ts" setup>
   import {computed, ref, watch} from "vue";
   import PButton from "primevue/button";
+  import InputText from "primevue/inputtext";
+  import Checkbox from "primevue/checkbox";
   import type {FileUploadSelectEvent} from "primevue/fileupload";
   import Password from "primevue/password";
   import Bill from "@/processing/bill";
@@ -35,12 +60,16 @@
   import FileProcessorWrapper from "@/FileProcessorWrapper";
   import FileUploadLight from "@/ui/open_dlg/FileUploadLight.vue";
   import {loadFile} from "@/ui/utils/utils";
+  import BrowserStorage from "@/BrowserStorage";
 
   const emit = defineEmits(["update:ready"]);
 
   const file = ref<File | null>(null);
   const passwd = ref("");
   const errorMsg = ref("");
+  const saveToStorage = ref(true);
+  const saveToStorageEnc = ref(true);
+  const saveToStorageName = ref("");
   const refPasswdInp = ref();
 
   const success = ref(false);
@@ -54,6 +83,13 @@
 
   function addFile(e: FileUploadSelectEvent) {
     file.value = e.files[0];
+
+    let fileName = file.value!.name;
+    const dotIdx = fileName.lastIndexOf(".");
+    if(dotIdx !== -1)
+      fileName = fileName.substring(0, dotIdx);
+    saveToStorageName.value = fileName;
+
     refPasswdInp.value?.$refs.input.$el.focus();
   }
 
@@ -80,6 +116,16 @@
         try {
           await FileProcessorWrapper.INSTANCE.loadFile(new BufferReader(dataDec));
           FileProcessorWrapper.INSTANCE.setKey(key);
+
+          if(saveToStorage.value) {
+            try {
+              await BrowserStorage.INSTANCE.saveProposal(saveToStorageName.value, dataDec,
+                  saveToStorageEnc.value ? key : null);
+            } catch (e) {
+              console.error("unable to store proposal:", e);
+              errorMsg.value = "there was an error while storing the proposal";
+            }
+          }
 
           success.value = true;
         } catch (e) {

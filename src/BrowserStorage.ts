@@ -137,7 +137,7 @@ export default class BrowserStorage {
     }
 
     async loadProposal(name: string, cipherKey: Uint8Array | null): Promise<Uint8Array> {
-        let data = await dbGet<Uint8Array>(name, this.authorStorage);
+        let data = await dbGet<Uint8Array>(name, this.proposalStorage);
         if(data === undefined)
             throw new Error(`entry not found (db: data::proposal, key: ${name})`);
 

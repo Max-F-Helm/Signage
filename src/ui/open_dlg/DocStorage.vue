@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref, watch, onBeforeMount} from "vue";
+  import {computed, ref, watch, onBeforeMount} from "vue";
   import DataTable from "primevue/datatable";
   import Column from "primevue/column";
   import PButton from "primevue/button";
@@ -57,6 +57,8 @@ import {computed, ref, watch, onBeforeMount} from "vue";
   import BrowserStorage from "@/BrowserStorage";
   import Bill from "@/processing/bill";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
+  import BufferReader from "@/processing/buffer-reader";
+  import {Buffer} from "buffer";
 
   interface Entry {
     name: string,
@@ -91,7 +93,7 @@ import {computed, ref, watch, onBeforeMount} from "vue";
   }
 
   async function onDel(name: string) {
-    await BrowserStorage.INSTANCE.removeIdentity(name);
+    await BrowserStorage.INSTANCE.removeProposal(name);
     await reloadEntries();
   }
 
@@ -105,23 +107,23 @@ import {computed, ref, watch, onBeforeMount} from "vue";
         cipherKey = await Bill.digest_pwd(passwd.value);
       }
 
-      const identity = await BrowserStorage.INSTANCE.loadIdentity(selectedEntry.value!.name, cipherKey);
+      const data = await BrowserStorage.INSTANCE.loadProposal(selectedEntry.value!.name, cipherKey);
 
-      FileProcessorWrapper.INSTANCE.setIdentity(identity);
-      FileProcessorWrapper.INSTANCE.init();
+      await FileProcessorWrapper.INSTANCE.loadFile(new BufferReader(Buffer.from(data)));
+      FileProcessorWrapper.INSTANCE.setKey(cipherKey);
 
       success.value = true;
     } catch (e) {
-      console.error("unable to load identity from storage", e);
+      console.error("unable to load proposal from storage", e);
       if(passwordRequired.value)
-        errorMsg.value = "there was an error while loading the identity (was the password correct?)";
+        errorMsg.value = "there was an error while loading the proposal (was the password correct?)";
       else
-        errorMsg.value = "there was an error while loading the identity";
+        errorMsg.value = "there was an error while loading the proposal";
     }
   }
 
   async function reloadEntries() {
-    entries.value = Object.entries(await BrowserStorage.INSTANCE.availableIdentities()).map(([k, v]) => {
+    entries.value = Object.entries(await BrowserStorage.INSTANCE.availableProposals()).map(([k, v]) => {
       return {
         name: k,
         encrypted: v.encrypted

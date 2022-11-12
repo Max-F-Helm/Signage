@@ -37,7 +37,6 @@
       </div>
     </div>
 
-
     <div v-show="errorMsg.length !== 0" class=" p-inline-message p-inline-message-error">
       {{ errorMsg }}
     </div>

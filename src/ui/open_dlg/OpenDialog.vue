@@ -22,6 +22,10 @@
         <DocChoice @update:choice="onDocUpdateChoice"></DocChoice>
       </template>
 
+      <template #od-doc_sto>
+        <DocStorage @update:ready="v => onUpdateStepReady('od-doc_sto', v)"></DocStorage>
+      </template>
+
       <template #od-doc_upl>
         <DocUpload @update:ready="v => onUpdateStepReady('od-doc_upl', v)"></DocUpload>
       </template>
@@ -60,6 +64,7 @@
   import DocNew from "@/ui/open_dlg/DocNew.vue";
   import DocInitialAddendum from "@/ui/open_dlg/DocInitialAddendum.vue";
   import IdStorage from "@/ui/open_dlg/IdStorage.vue";
+  import DocStorage from "@/ui/open_dlg/DocStorage.vue";
 
   const emit = defineEmits(["update:modelValue"]);
 
@@ -79,9 +84,10 @@
     }
   });
 
-  const idModeStorage = ref(false);
+  const idModeSto = ref(true);
   const idModeUpl = ref(false);
   const idModeNew = ref(false);
+  const docModeSto = ref(true);
   const docModeUpl = ref(false);
   const docModeNew = ref(false);
 
@@ -100,31 +106,36 @@
       {
         id: "od-id_upl",
         label: "Open Identity",
-        hidden: idModeNew.value || idModeStorage.value
+        hidden: idModeNew.value || idModeSto.value
       },
       {
         id: "od-id_new",
         label: "Create Identity",
-        hidden: idModeUpl.value || idModeStorage.value
+        hidden: idModeUpl.value || idModeSto.value
       },
       {
         id: "od-doc_choice",
         label: "Proposal Source"
       },
       {
+        id: "od-doc_sto",
+        label: "Select Proposal",
+        hidden: docModeNew.value || docModeUpl.value
+      },
+      {
         id: "od-doc_upl",
         label: "Open Proposal",
-        hidden: docModeNew.value
+        hidden: docModeNew.value || docModeSto.value
       },
       {
         id: "od-doc_new",
         label: "Create Proposal",
-        hidden: docModeUpl.value
+        hidden: docModeSto.value || docModeUpl.value
       },
       {
         id: "od-doc_new_addendum",
         label: "Add Initial Addendum",
-        hidden: docModeUpl.value
+        hidden: docModeSto.value || docModeUpl.value
       }
     ]
   });
@@ -150,17 +161,17 @@
   function onIdUpdateChoice(choice: string) {
     switch (choice) {
       case "storage":
-        idModeStorage.value = true;
+        idModeSto.value = true;
         idModeUpl.value = false;
         idModeNew.value = false;
         break;
       case "upload":
-        idModeStorage.value = false;
+        idModeSto.value = false;
         idModeUpl.value = true;
         idModeNew.value = false;
         break;
       case "new":
-        idModeStorage.value = false;
+        idModeSto.value = false;
         idModeUpl.value = false;
         idModeNew.value = true;
         break;
@@ -173,11 +184,18 @@
 
   function onDocUpdateChoice(choice: string) {
     switch (choice) {
+      case "storage":
+        docModeSto.value = true;
+        docModeUpl.value = false;
+        docModeNew.value = false;
+        break;
       case "upload":
+        docModeSto.value = false;
         docModeUpl.value = true;
         docModeNew.value = false;
         break;
       case "new":
+        docModeSto.value = false;
         docModeUpl.value = false;
         docModeNew.value = true;
         break;
