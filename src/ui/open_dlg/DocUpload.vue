@@ -23,7 +23,7 @@
       <div class="p-inputgroup-addon p-0 w-6">
         <span class="p-input-icon-left w-full">
           <i class="pi pi-file"></i>
-          <InputText v-model="saveToStorageName" placeholder="Name" class="border-0 w-full"/>
+          <InputText v-model="saveToStorageName" placeholder="Name" :disabled="!saveToStorage" class="border-0 w-full"/>
         </span>
       </div>
     </div>
