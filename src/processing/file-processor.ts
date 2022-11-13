@@ -249,6 +249,8 @@ export class FileProcessor {
             this.errorCallback("chain contains multiple votes for one addendum from one author");
         if(!this.checkAuthorSignCount(frames))
             this.errorCallback("author sign-count does not match");
+        if(!this.checkFramesAfterConsent(frames))
+            this.errorCallback("proposal was modified after a consent had been established");
     }
 
     private sortFrames(frames: Frame[]) {
@@ -351,6 +353,27 @@ export class FileProcessor {
         for(const author of this.authors!)
             if(signCounts.get(author)! !== author.signCount)
                 return false;
+        return true;
+    }
+
+    //TODO test
+    private checkFramesAfterConsent(chain: Frame[]): boolean {
+        let addendumAcceptVotes = 0;
+        for(let i = 0; i < chain.length; i++) {
+            const frame = chain[i];
+            if(frame.frameType === FrameType.Vote){
+                const vote = frame as Vote;
+                if(vote.vote){
+                    addendumAcceptVotes++;
+
+                    if(addendumAcceptVotes === this.authors!.length) {
+                        return i === chain.length - 1;
+                    }
+                }
+            } else if(frame.frameType === FrameType.Addendum) {
+                addendumAcceptVotes = 0;
+            }
+        }
         return true;
     }
     //endregion
