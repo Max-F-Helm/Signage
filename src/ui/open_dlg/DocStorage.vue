@@ -10,7 +10,7 @@
                  selectionMode="single" v-model:selection="selectedEntry" :rowHover="true"
                  :scrollable="true" scrollHeight="16rem"
                  @row-select="onSelect">
-        <Column field="name" header="Name + Mail" :sortable="true"></Column>
+        <Column field="name" header="Name" :sortable="true"></Column>
         <Column field="encrypted" header="Encrypted" class="colCryptStat">
           <template #body="slotProps">
             <div v-if="slotProps.data.encrypted" class="pi pi-lock"></div>
