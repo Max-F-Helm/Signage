@@ -7,11 +7,13 @@ import {Buffer} from "buffer";
 import IdentityProcessor from "@/processing/identity-processor";
 import BufferReader from "@/processing/buffer-reader";
 import BufferWriter from "@/processing/buffer-writer";
+import type FileProcessorWrapper from "@/FileProcessorWrapper";
+import {IllegalArgumentException} from "@/processing/exceptions";
 
 const DATA_DB_NAME = "Signage::Storage";
 
 export interface EntryMeta {
-    encrypted: boolean
+    encryptionKey: Uint8Array | null
 }
 
 export default class BrowserStorage {
@@ -44,29 +46,24 @@ export default class BrowserStorage {
         return ret;
     }
 
-    async loadIdentity(name: string, cipherKey: Uint8Array | null): Promise<Identity> {
+    async loadIdentity(name: string, encryptionKey: Uint8Array): Promise<Identity> {
         let data = await dbGet<Uint8Array>(name, this.identityStorage);
         if(data === undefined)
             throw new Error(`entry not found (db: data::identity, key: ${name})`);
 
-        if(cipherKey !== null) {
-            data = await Bill.decrypt(data, cipherKey);
-        }
+        data = await Bill.decrypt(data, encryptionKey);
 
         return await IdentityProcessor.loadIdentity(new BufferReader(Buffer.from(data)));
     }
 
-    async saveIdentity(identity: Identity, cipherKey: Uint8Array | null) {
+    async saveIdentity(identity: Identity, encryptionKey: Uint8Array, storeEncryptionKey: boolean) {
         const writer = new BufferWriter();
         await IdentityProcessor.saveIdentity(writer, identity);
         let data = writer.take().valueOf();
-
-        if(cipherKey !== null) {
-            data = await Bill.encrypt(data, cipherKey);
-        }
+        data = await Bill.encrypt(data, encryptionKey);
 
         const meta: EntryMeta = {
-            encrypted: cipherKey !== null
+            encryptionKey: storeEncryptionKey ? encryptionKey : null
         };
 
         const key = `${identity.name} (${identity.mail})`;
@@ -90,29 +87,24 @@ export default class BrowserStorage {
         return ret;
     }
 
-    async loadAuthor(name: string, cipherKey: Uint8Array | null): Promise<Author> {
+    async loadAuthor(name: string, encryptionKey: Uint8Array): Promise<Author> {
         let data = await dbGet<Uint8Array>(name, this.authorStorage);
         if(data === undefined)
             throw new Error(`entry not found (db: data::author, key: ${name})`);
 
-        if(cipherKey !== null) {
-            data = await Bill.decrypt(data, cipherKey);
-        }
+        data = await Bill.decrypt(data, encryptionKey);
 
         return await IdentityProcessor.loadAuthor(new BufferReader(Buffer.from(data)));
     }
 
-    async saveAuthor(author: Author, cipherKey: Uint8Array | null) {
+    async saveAuthor(author: Author, encryptionKey: Uint8Array, storeEncryptionKey: boolean) {
         const writer = new BufferWriter();
         await IdentityProcessor.saveAuthor(writer, author);
         let data = writer.take().valueOf();
-
-        if(cipherKey !== null) {
-            data = await Bill.encrypt(data, cipherKey);
-        }
+        data = await Bill.encrypt(data, encryptionKey);
 
         const meta: EntryMeta = {
-            encrypted: cipherKey !== null
+            encryptionKey: storeEncryptionKey ? encryptionKey : null
         };
 
         const key = `${author.name} (${author.mail})`;
@@ -136,25 +128,34 @@ export default class BrowserStorage {
         return ret;
     }
 
-    async loadProposal(name: string, cipherKey: Uint8Array | null): Promise<Uint8Array> {
+    async loadProposal(name: string, encryptionKey: Uint8Array, dest: FileProcessorWrapper) {
         let data = await dbGet<Uint8Array>(name, this.proposalStorage);
         if(data === undefined)
             throw new Error(`entry not found (db: data::proposal, key: ${name})`);
 
-        if(cipherKey !== null) {
-            data = await Bill.decrypt(data, cipherKey);
-        }
-
-        return data;
+        data = await Bill.decrypt(data, encryptionKey);
+        await dest.loadFile(new BufferReader(Buffer.from(data)));
+        dest.setKey(encryptionKey);
+        dest.storageName.value = name;
     }
 
-    async saveProposal(name: string, data: Uint8Array, cipherKey: Uint8Array | null) {
-        if(cipherKey !== null) {
-            data = await Bill.encrypt(data, cipherKey);
-        }
+    async saveProposal(src: FileProcessorWrapper, storeEncryptionKey: boolean) {
+        if(!src.isFileLoaded())
+            throw new IllegalArgumentException("no file is loaded");
+
+        const name = src.storageName.value;
+        if(name === null)
+            throw new IllegalArgumentException("no name is set");
+
+        const encryptionKey = src.getKey();
+        if(encryptionKey === null)
+            throw new IllegalArgumentException("no key is set");
+
+        let data: Uint8Array = await src.saveFile();
+        data = await Bill.encrypt(data, encryptionKey);
 
         const meta: EntryMeta = {
-            encrypted: cipherKey !== null
+            encryptionKey: storeEncryptionKey ? encryptionKey : null
         };
 
         await dbSet(name, data, this.proposalStorage);

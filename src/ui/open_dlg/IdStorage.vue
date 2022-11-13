@@ -13,7 +13,7 @@
         <Column field="name" header="Name + Mail" :sortable="true"></Column>
         <Column field="encrypted" header="Encrypted" class="colCryptStat">
           <template #body="slotProps">
-            <div v-if="slotProps.data.encrypted" class="pi pi-lock"></div>
+            <div v-if="slotProps.data.encryptionKey === null" class="pi pi-lock"></div>
             <div v-else class="pi pi-lock-open"></div>
           </template>
         </Column>
@@ -60,7 +60,7 @@ import {computed, ref, watch, onBeforeMount} from "vue";
 
   interface Entry {
     name: string,
-    encrypted: boolean
+    encryptionKey: Uint8Array | null
   }
 
   const emit = defineEmits(["update:ready"]);
@@ -77,7 +77,7 @@ import {computed, ref, watch, onBeforeMount} from "vue";
   });
 
   const passwordRequired = computed(() => {
-    return selectedEntry.value !== null && selectedEntry.value.encrypted;
+    return selectedEntry.value !== null && selectedEntry.value.encryptionKey === null;
   });
 
   function onSelect() {
@@ -100,9 +100,11 @@ import {computed, ref, watch, onBeforeMount} from "vue";
     errorMsg.value = "";
 
     try {
-      let cipherKey: Uint8Array | null = null;
+      let cipherKey: Uint8Array;
       if(passwordRequired.value) {
         cipherKey = await Bill.digest_pwd(passwd.value);
+      } else {
+        cipherKey = selectedEntry.value!.encryptionKey!;
       }
 
       const identity = await BrowserStorage.INSTANCE.loadIdentity(selectedEntry.value!.name, cipherKey);
@@ -124,7 +126,7 @@ import {computed, ref, watch, onBeforeMount} from "vue";
     entries.value = Object.entries(await BrowserStorage.INSTANCE.availableIdentities()).map(([k, v]) => {
       return {
         name: k,
-        encrypted: v.encrypted
+        encryptionKey: v.encryptionKey
       }
     });
   }

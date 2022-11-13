@@ -54,7 +54,7 @@ export default class FileProcessorWrapper {
         return this.identity;
     }
 
-    setKey(key: Uint8Array | null) {
+    setKey(key: Uint8Array) {
         this.key = key;
     }
 

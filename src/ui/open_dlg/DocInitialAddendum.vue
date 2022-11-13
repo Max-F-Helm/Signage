@@ -101,8 +101,7 @@
             FileProcessorWrapper.INSTANCE.storageName.value = saveToStorageName.value;
 
             try {
-              await BrowserStorage.INSTANCE.saveProposal(saveToStorageName.value, data,
-                  saveToStorageEnc.value ? key : null);
+              await BrowserStorage.INSTANCE.saveProposal(FileProcessorWrapper.INSTANCE, saveToStorageEnc.value);
             } catch (e) {
               console.error("unable to store proposal:", e);
               errorMsg.value = "there was an error while storing the proposal";
