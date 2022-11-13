@@ -5,18 +5,23 @@
       <PButton @click="onSavePatches" class="w-12rem justify-content-center">Save Patchset</PButton>
       <div class="flex-grow-1 mx-1"></div>
       <PButton @click="onSaveProposal" class="w-12rem justify-content-center">Save Proposal</PButton>
+      <template v-if="fileProcessor.storageName !== null">
+        <div class="flex-grow-1 mx-1"></div>
+        <PButton @click="onSaveProposalToStorage" class="w-12rem justify-content-center">Update in Storage</PButton>
+      </template>
     </div>
   </Dialog>
 </template>
 
 <script setup lang="ts">
-  import {computed, ref, watch} from "vue";
+  import {computed, onMounted, onUnmounted, ref, watch} from "vue";
   import PButton from "primevue/button";
   import Dialog from "primevue/dialog";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
   import Bill from "@/processing/bill";
   import {download} from "@/ui/utils/utils";
   import {useToast} from "primevue/usetoast";
+  import BrowserStorage from "@/BrowserStorage";
 
   const props = defineProps({
     show: {
@@ -55,6 +60,41 @@
     } catch (e) {
       console.error("unable to save proposal: saveFile failed", e);
       showErrToast("Error while saving file", e);
+    }
+  }
+
+  async function onSaveProposalToStorage() {
+    try {
+      const data = await fileProcessor.saveFile();
+
+      try {
+        const name = fileProcessor.storageName.value!;
+        const storedProposals = await BrowserStorage.INSTANCE.availableProposals();
+        if(!storedProposals.hasOwnProperty(name)) {
+          // seems like it was deleted in the meantime
+          fileProcessor.storageName.value = null;
+
+          console.warn("proposal was deleted from storage while in use");
+          showErrToast("proposal was deleted from storage", null);
+
+          return;
+        }
+        const encrypted = storedProposals[name].encrypted;
+
+        await BrowserStorage.INSTANCE.saveProposal(name, data, encrypted ? fileProcessor.getKey() : null);
+
+        toast.add({
+          severity: "success",
+          summary: "saved to storage",
+          life: 5000
+        });
+      } catch (e) {
+        console.error("unable to store proposal: saveProposal failed", e);
+        showErrToast("Error while storing file", e);
+      }
+    } catch (e) {
+      console.error("unable to store proposal: saveFile failed", e);
+      showErrToast("Error while storing file", e);
     }
   }
 

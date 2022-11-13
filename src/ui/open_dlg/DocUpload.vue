@@ -113,6 +113,8 @@
           FileProcessorWrapper.INSTANCE.setKey(key);
 
           if(saveToStorage.value) {
+            FileProcessorWrapper.INSTANCE.storageName.value = saveToStorageName.value;
+
             try {
               await BrowserStorage.INSTANCE.saveProposal(saveToStorageName.value, dataDec,
                   saveToStorageEnc.value ? key : null);
@@ -120,6 +122,8 @@
               console.error("unable to store proposal:", e);
               errorMsg.value = "there was an error while storing the proposal";
             }
+          } else {
+            FileProcessorWrapper.INSTANCE.storageName.value = null;
           }
 
           success.value = true;

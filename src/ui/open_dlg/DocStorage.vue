@@ -111,6 +111,7 @@
 
       await FileProcessorWrapper.INSTANCE.loadFile(new BufferReader(Buffer.from(data)));
       FileProcessorWrapper.INSTANCE.setKey(cipherKey);
+      FileProcessorWrapper.INSTANCE.storageName.value = selectedEntry.value!.name;
 
       success.value = true;
     } catch (e) {

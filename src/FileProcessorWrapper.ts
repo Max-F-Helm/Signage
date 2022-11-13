@@ -6,6 +6,7 @@ import {IllegalStateException} from "@/processing/exceptions";
 import type Author from "@/processing/model/Author";
 import type BufferReader from "@/processing/buffer-reader";
 import type {Buffer} from "buffer";
+import {ref} from "vue";
 
 export type Listener = () => void;
 
@@ -18,6 +19,12 @@ export default class FileProcessorWrapper {
     private key: Uint8Array | null = null;
     private readonly listeners: Listener[] = [];
     private readonly errListeners: ErrorCallback[] = [];
+
+    /**
+     * the name of the Proposal with which it is stored in BrowserStorage
+     * or <code>null</code> if it is not stored
+     */
+    readonly storageName = ref<string | null>(null);
 
     addListener(listener: Listener) {
         this.listeners.push(listener);
