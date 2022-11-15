@@ -87,24 +87,21 @@ export default class BrowserStorage {
         return ret;
     }
 
-    async loadAuthor(name: string, encryptionKey: Uint8Array): Promise<Author> {
-        let data = await dbGet<Uint8Array>(name, this.authorStorage);
+    async loadAuthor(name: string): Promise<Author> {
+        const data = await dbGet<Uint8Array>(name, this.authorStorage);
         if(data === undefined)
             throw new Error(`entry not found (db: data::author, key: ${name})`);
-
-        data = await Bill.decrypt(data, encryptionKey);
 
         return await IdentityProcessor.loadAuthor(new BufferReader(Buffer.from(data)));
     }
 
-    async saveAuthor(author: Author, encryptionKey: Uint8Array, storeEncryptionKey: boolean) {
+    async saveAuthor(author: Author) {
         const writer = new BufferWriter();
         await IdentityProcessor.saveAuthor(writer, author);
-        let data = writer.take().valueOf();
-        data = await Bill.encrypt(data, encryptionKey);
+        const data = writer.take().valueOf();
 
         const meta: EntryMeta = {
-            encryptionKey: storeEncryptionKey ? encryptionKey : null
+            encryptionKey: null
         };
 
         const key = `${author.name} (${author.mail})`;
