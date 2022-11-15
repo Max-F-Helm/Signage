@@ -2,23 +2,40 @@
   <div class="flex flex-column row-gap-3">
     <div>
       Authors (excluding yourself):
-      <FileUpload :fileLimit="32767" :multiple="true" :showCancelButton="false"
-                  :showUploadButton="false" mode="advanced"
-                  @remove="delAuthorFile" @select="addAuthorFile">
-        <template #content="{ files, uploadedFiles, removeFileCallback }">
-          <div v-if="files.length > 0">
-            <div class="flex flex-wrap p-1">
-              <div v-for="(file, index) of files" :key="file.name + file.type + file.size"
-                   class="card flex flex-row mb-1 p-2 border-1 surface-border align-items-center w-full">
-                <span class="font-semibold">{{ file.name }}</span>
-                <div class="flex-grow-1"></div>
-                <PButton icon="pi pi-times" @click="removeFileCallback(index)"
-                         class="p-button-outlined p-button-danger p-button-rounded"></PButton>
+      <TabView>
+        <TabPanel header="Upload Authors">
+          <FileUpload :fileLimit="32767" :multiple="true" :showCancelButton="false"
+                      :showUploadButton="false" mode="advanced"
+                      @remove="delAuthorFile" @select="addAuthorFile">
+            <template #content="{ files, uploadedFiles, removeFileCallback }">
+              <div v-if="files.length > 0">
+                <div class="flex flex-wrap p-1">
+                  <div v-for="(file, index) of files" :key="file.name + file.type + file.size"
+                       class="card flex flex-row mb-1 p-2 border-1 surface-border align-items-center w-full">
+                    <span class="font-semibold">{{ file.name }}</span>
+                    <div class="flex-grow-1"></div>
+                    <PButton icon="pi pi-times" @click="removeFileCallback(index)"
+                             class="p-button-outlined p-button-danger p-button-rounded"></PButton>
+                  </div>
+                </div>
               </div>
-            </div>
+            </template>
+          </FileUpload>
+        </TabPanel>
+
+        <TabPanel header="Stored Authors">
+          <div class="mb-2 ml-2">
+            <PButton icon="pi pi-replay" class="p-button-rounded p-button-outlined p-button-secondary"
+                     @click="reloadStoredAuthors"></PButton>
+            <div class="flex-grow-1"></div>
           </div>
-        </template>
-      </FileUpload>
+          <DataTable :value="storedAuthors" selectionMode="multiple" v-model:selection="selectedStoredAuthors"
+                     dataKey="name" :rowHover="true" :scrollable="true" scrollHeight="16rem">
+            <Column selectionMode="multiple"></Column>
+            <Column field="name" header="Name + Mail" :sortable="true"></Column>
+          </DataTable>
+        </TabPanel>
+      </TabView>
     </div>
     <div class="p-inputgroup">
       <span class="p-inputgroup-addon">
@@ -43,17 +60,28 @@
 </template>
 
 <script lang="ts" setup>
-  import {computed, ref, watch} from "vue";
+import {computed, onBeforeMount, ref, watch} from "vue";
   import PButton from "primevue/button";
   import Password from "primevue/password";
+  import TabView from "primevue/tabview";
+  import TabPanel from "primevue/tabpanel";
+  import DataTable from "primevue/datatable";
+  import Column from "primevue/column";
+  import FileUpload from "primevue/fileupload";
   import IdentityProcessor from "@/processing/identity-processor";
   import Bill from "@/processing/bill";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
   import type {FileUploadRemoveEvent, FileUploadSelectEvent} from "primevue/fileupload";
-  import FileUpload from "primevue/fileupload";
   import type Author from "@/processing/model/Author";
   import BufferReader from "@/processing/buffer-reader";
   import {loadFile} from "@/ui/utils/utils";
+  import BrowserStorage from "@/BrowserStorage";
+
+  interface Entry {
+    name: string
+  }
+
+  const browserStorage = BrowserStorage.INSTANCE;
 
   const emit = defineEmits(["update:ready"]);
 
@@ -61,6 +89,8 @@
   const passwd = ref("");
   const errorMsg = ref("");
   const refPasswdInp = ref();
+  const storedAuthors = ref<Entry[]>([]);
+  const selectedStoredAuthors = ref<Entry[]>([]);
 
   function addAuthorFile(e: FileUploadSelectEvent) {
     authors.value = e.files;
@@ -101,6 +131,17 @@
           return;
         }
       }
+
+      for(const selected of selectedStoredAuthors.value){
+        try {
+          loadedAuthors.push(await browserStorage.loadAuthor(selected.name));
+        } catch (e) {
+          console.error("unable to create proposal: author load failed", e);
+          errorMsg.value = `there was an error while creating the proposal (stored author ${selected.name} is corrupted)`;
+          return;
+        }
+      }
+
       loadedAuthors.push(await IdentityProcessor.toAuthor(FileProcessorWrapper.INSTANCE.getIdentity()!));
 
       try {
@@ -122,6 +163,18 @@
     const data = await loadFile(file);
     return IdentityProcessor.loadAuthor(new BufferReader(data));
   }
+
+  async function reloadStoredAuthors() {
+    storedAuthors.value = Object.entries(await browserStorage.availableAuthors()).map(([k]) => {
+      return {
+        name: k
+      }
+    });
+  }
+
+  onBeforeMount(async () => {
+    await reloadStoredAuthors();
+  });
 </script>
 
 <style lang="scss" scoped>

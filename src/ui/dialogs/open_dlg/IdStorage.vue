@@ -133,7 +133,7 @@ import {computed, ref, watch, onBeforeMount} from "vue";
 
   onBeforeMount(async () => {
     await reloadEntries();
-  })
+  });
 </script>
 
 <style lang="scss">
