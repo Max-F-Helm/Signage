@@ -2,7 +2,7 @@
   <Dialog v-model:visible="show" :closable="true" :modal="false" header="Save Changes">
     Do you want to save the changes?
     <div class="flex flex-row mt-1">
-      <PButton @click="onSavePatches" class="w-12rem justify-content-center">Save Patchset</PButton>
+      <PButton @click="onSavePatches" :disabled="!unsavedPatch" class="w-12rem justify-content-center">Save Patchset</PButton>
       <div class="flex-grow-1 mx-1"></div>
       <PButton @click="onSaveProposal" class="w-12rem justify-content-center">Save Proposal</PButton>
       <template v-if="fileProcessor.storageName !== null">
@@ -35,6 +35,9 @@
   const fileProcessor = FileProcessorWrapper.INSTANCE;
   const toast = useToast();
 
+  const patchExported = ref<boolean>(false);
+  const unsavedPatch = ref(false);
+
   const show = computed({
     get() {
       return props.modelValue;
@@ -44,11 +47,14 @@
     }
   });
 
-  const patchExported = ref<boolean>(false);
   watch(show, (showing) => {
-    if(!showing && patchExported.value) {
-      patchExported.value = false;
-      fileProcessor.clearChanges();
+    if(showing) {
+      unsavedPatch.value = fileProcessor.getChangesCount() > 0;
+    } else {
+      if(patchExported.value) {
+        patchExported.value = false;
+        fileProcessor.clearChanges();
+      }
     }
   });
 

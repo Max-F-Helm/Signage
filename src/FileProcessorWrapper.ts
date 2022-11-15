@@ -149,6 +149,13 @@ export default class FileProcessorWrapper {
         this.fileProcessor.clearChanges();
     }
 
+    getChangesCount(): number {
+        if(this.fileProcessor === null)
+            throw new IllegalStateException("not initialized");
+
+        return this.fileProcessor.getChangesCount();
+    }
+
     private onErr(msg: string) {
         this.errListeners.forEach(l => l(msg));
     }
