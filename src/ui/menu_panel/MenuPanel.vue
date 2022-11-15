@@ -5,22 +5,42 @@
   </Sidebar>
 
   <InfoPopup v-model="showInfo"></InfoPopup>
+
+  <InputTextDlg v-model="showInpPasswdDlg" mode="password" header="Enter password for save" @result="onPasswordResult"></InputTextDlg>
+  <InputFileDlg v-model="showInpFileDlg" mode="single" header="Upload file" @result="onFileResult"></InputFileDlg>
 </template>
 
 <script setup lang="ts">
-  import {onBeforeUnmount, onMounted, ref} from "vue";
+  import {ref, watch} from "vue";
   import PButton from "primevue/button";
   import Sidebar from "primevue/sidebar";
   import PanelMenu from "primevue/panelmenu";
   import type {MenuItem} from "primevue/menuitem";
   import InfoPopup from "@/ui/menu_panel/InfoPopup.vue";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
+  import {useToast} from "primevue/usetoast";
+  import InputTextDlg from "@/ui/dialogs/InputTextDlg.vue";
+  import InputFileDlg from "@/ui/dialogs/InputFileDlg.vue";
+  import type {InputFileDlgResult, InputTextDlgResult} from "@/ui/dialogs/Helpers";
+  import BufferWriter from "@/processing/buffer-writer";
+  import IdentityProcessor from "@/processing/identity-processor";
+  import {download, loadFile} from "@/ui/utils/utils";
+  import Bill from "@/processing/bill";
+  import BufferReader from "@/processing/buffer-reader";
+  import {Buffer} from "buffer";
+
+  const toast = useToast();
 
   const emit = defineEmits(["do:showOpenDlg", "do:showSaveDlg", "do:showAuthorsDlg"]);
 
   const open = ref(false);
   const disableFileActions = ref(true);
+  const disableIdentityActions = ref(true);
   const showInfo = ref(false);
+  const showInpPasswdDlg = ref(false);
+  const showInpFileDlg = ref(false);
+  /** current action for dlg-callbacks; values: "identityExportPasswd", "patchsetImportFile" */
+  const currentAction = ref("");
 
   const menuItems = ref<MenuItem[]>([
     {
@@ -65,12 +85,14 @@
           key: "main-identities-export_author",
           label: "Save own Author",
           icon: "pi pi-file-export",
+          disabled: disableIdentityActions as unknown as boolean,
           command: onIdentitiesExportAuthor
         },
         {
           key: "main-identities-export_identity",
           label: "Save own Identity",
           icon: "pi pi-file-export",
+          disabled: disableIdentityActions as unknown as boolean,
           command: onIdentitiesExportIdentity
         },
 
@@ -84,6 +106,13 @@
     }
   ]);
 
+  watch(open, (open) => {
+    if(open) {
+      disableFileActions.value = !FileProcessorWrapper.INSTANCE.isFileLoaded();
+      disableIdentityActions.value = FileProcessorWrapper.INSTANCE.getIdentity() === null;
+    }
+  })
+
   function onFileOpen() {
     emit("do:showOpenDlg");
   }
@@ -93,36 +122,98 @@
   }
 
   function onFileImportPatchset() {
-
+    currentAction.value = "patchsetImportFile";
+    showInpFileDlg.value = true;
   }
 
   function onIdentitiesManageAuthors() {
     emit("do:showAuthorsDlg");
   }
 
-  function onIdentitiesExportAuthor() {
-
+  async function onIdentitiesExportAuthor() {
+    try {
+      const author = await IdentityProcessor.toAuthor(FileProcessorWrapper.INSTANCE.getIdentity()!);
+      const writer = new BufferWriter();
+      await IdentityProcessor.saveAuthor(writer, author);
+      const authorData = writer.take();
+      download(authorData, "author.sAut");
+    } catch (e) {
+      console.error("error while exporting the current identity as author", e);
+      showErrToast("unable to export Author to file", e);
+    }
   }
 
   function onIdentitiesExportIdentity() {
-
+    currentAction.value = "identityExportPasswd";
+    showInpPasswdDlg.value = true;
   }
 
   function onShowInfo() {
     showInfo.value = true;
   }
 
-  function checkFileLoaded() {
-    disableFileActions.value = !FileProcessorWrapper.INSTANCE.isFileLoaded();
+  function onPasswordResult(res: InputTextDlgResult) {
+    switch (currentAction.value) {
+      case "identityExportPasswd": {
+        if(res.ok) {
+          exportIdentity(res.text);
+        }
+      }
+    }
   }
 
-  onMounted(() => {
-    FileProcessorWrapper.INSTANCE.addListener(checkFileLoaded);
-    checkFileLoaded();
-  });
-  onBeforeUnmount(() => {
-    FileProcessorWrapper.INSTANCE.removeListener(checkFileLoaded);
-  });
+  function onFileResult(res: InputFileDlgResult) {
+    switch (currentAction.value) {
+      case "patchsetImportFile": {
+        if(res.ok) {
+          importPatchset(res.files[0]);
+        }
+      }
+    }
+  }
+
+  async function exportIdentity(password: string) {
+    try {
+      const writer = new BufferWriter();
+      await IdentityProcessor.saveIdentity(writer, FileProcessorWrapper.INSTANCE.getIdentity()!);
+      let data: Uint8Array = writer.take();
+
+      const key = await Bill.digest_pwd(password);
+      data = await Bill.encrypt(data, key);
+
+      download(data, "identity.sIdn");
+    } catch (e) {
+      console.error("error while exporting the current identity", e);
+      showErrToast("unable to export current identity", e);
+    }
+  }
+
+  async function importPatchset(file: File) {
+    try {
+      let data: Uint8Array = await loadFile(file);
+      data = await Bill.decrypt(data, FileProcessorWrapper.INSTANCE.getKey()!);
+
+      await FileProcessorWrapper.INSTANCE.importPatchSet(new BufferReader(Buffer.from(data)));
+
+      toast.add({
+        severity: "success",
+        summary: "Patchset imported",
+        life: 3000
+      });
+    } catch (e) {
+      console.error("error while importing the Patchset", e);
+      showErrToast("unable to import the Patchset", e);
+    }
+  }
+
+  function showErrToast(summary: string, e: any) {
+    toast.add({
+      severity: "error",
+      summary: summary,
+      detail: e != null ? e.toString() : "unknown reason",
+      life: 5000
+    });
+  }
 </script>
 
 <style scoped lang="scss">
