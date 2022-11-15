@@ -1,9 +1,10 @@
 <template class="max-w-full max-h-full">
   <div>
-    <MenuPanel @doShowOpenDlg="showOpenDlg = true"
-               @doShowSaveDlg="showSaveDlg = true"></MenuPanel>
+    <MenuPanel @do:showOpenDlg="showOpenDlg = true"
+               @do:showSaveDlg="showSaveDlg = true"
+               @do:showAuthorsDlg="showAuthorsDlg = true"></MenuPanel>
 
-    <FileSpec @doShowSaveDlg="showSaveDlg = true"></FileSpec>
+    <FileSpec @do:showSaveDlg="showSaveDlg = true"></FileSpec>
 
     <OpenDialog v-model="showOpenDlg"></OpenDialog>
     <SaveChangesDlg v-model="showSaveDlg"></SaveChangesDlg>

@@ -20,13 +20,13 @@
   const fileProcessor = FileProcessorWrapper.INSTANCE;
   const toast = useToast();
 
-  const emit = defineEmits(["doShowSaveDlg"]);
+  const emit = defineEmits(["do:showSaveDlg"]);
 
   const authors = ref<Author[]>([]);
   const frames = ref<Frame[]>([]);
 
   function onModified() {
-    emit("doShowSaveDlg");
+    emit("do:showSaveDlg");
   }
 
   function reloadContent() {

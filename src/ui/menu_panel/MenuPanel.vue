@@ -8,16 +8,15 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onBeforeUnmount, onMounted, reactive, ref} from "vue";
+  import {onBeforeUnmount, onMounted, ref} from "vue";
   import PButton from "primevue/button";
   import Sidebar from "primevue/sidebar";
   import PanelMenu from "primevue/panelmenu";
   import type {MenuItem} from "primevue/menuitem";
   import InfoPopup from "@/ui/menu_panel/InfoPopup.vue";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
-import Menu from "primevue/menu";
 
-  const emit = defineEmits(["doShowOpenDlg", "doShowSaveDlg"]);
+  const emit = defineEmits(["do:showOpenDlg", "do:showSaveDlg", "do:showAuthorsDlg"]);
 
   const open = ref(false);
   const disableFileActions = ref(true);
@@ -86,11 +85,11 @@ import Menu from "primevue/menu";
   ]);
 
   function onFileOpen() {
-    emit("doShowOpenDlg");
+    emit("do:showOpenDlg");
   }
 
   function onFileSave() {
-    emit("doShowSaveDlg");
+    emit("do:showSaveDlg");
   }
 
   function onFileImportPatchset() {
