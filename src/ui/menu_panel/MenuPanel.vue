@@ -1,7 +1,7 @@
 <template>
   <PButton icon="pi pi-bars" @click="open = true" class="p-button-outlined mb-2"/>
   <Sidebar v-model:visible="open" position="left" :modal="true" :dismissable="true" class="p-sidebar-sm">
-    <PanelMenu :model="menuItems"></PanelMenu>
+    <PanelMenu :model="menuItems.val"></PanelMenu>
   </Sidebar>
 
   <InfoPopup v-model="showInfo"></InfoPopup>
@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-  import {ref, watch} from "vue";
+  import {computed, reactive, ref, watch} from "vue";
   import PButton from "primevue/button";
   import Sidebar from "primevue/sidebar";
   import PanelMenu from "primevue/panelmenu";
@@ -42,69 +42,76 @@
   /** current action for dlg-callbacks; values: "identityExportPasswd", "patchsetImportFile" */
   const currentAction = ref("");
 
-  const menuItems = ref<MenuItem[]>([
-    {
-      key: "main-file",
-      label: "File",
-      icon: "pi pi-file",
-      items: [
-        {
-          key: "main-file-open",
-          label: "Open / Create",
-          icon: "pi pi-file-import",
-          command: onFileOpen
-        },
-        {
-          key: "main-file-save",
-          label: "Save",
-          icon: "pi pi-file-export",
-          disabled: disableFileActions as unknown as boolean,
-          command: onFileSave
-        },
-        {
-          key: "main-file-import_patchset",
-          label: "Import Patchset",
-          icon: "pi pi-file-import",
-          disabled: disableFileActions as unknown as boolean,
-          command: onFileImportPatchset
-        }
-      ]
-    },
-    {
-      key: "main-identities",
-      label: "Identities",
-      icon: "pi pi-users",
-      items: [
-        {
-          key: "main-identities-manage_authors",
-          label: "Manege Authors",
-          icon: "pi pi-users",
-          command: onIdentitiesManageAuthors
-        },
-        {
-          key: "main-identities-export_author",
-          label: "Save own Author",
-          icon: "pi pi-file-export",
-          disabled: disableIdentityActions as unknown as boolean,
-          command: onIdentitiesExportAuthor
-        },
-        {
-          key: "main-identities-export_identity",
-          label: "Save own Identity",
-          icon: "pi pi-file-export",
-          disabled: disableIdentityActions as unknown as boolean,
-          command: onIdentitiesExportIdentity
-        },
+  //XXX PanelMenu break if it gets items from a computed val
+  const computedMenuItems = computed<MenuItem[]>(() => {
+    return [
+      {
+        key: "main-file",
+        label: "File",
+        icon: "pi pi-file",
+        items: [
+          {
+            key: "main-file-open",
+            label: "Open / Create",
+            icon: "pi pi-file-import",
+            command: onFileOpen
+          },
+          {
+            key: "main-file-save",
+            label: "Save",
+            icon: "pi pi-file-export",
+            disabled: disableFileActions.value,
+            command: onFileSave
+          },
+          {
+            key: "main-file-import_patchset",
+            label: "Import Patchset",
+            icon: "pi pi-file-import",
+            disabled: disableFileActions.value,
+            command: onFileImportPatchset
+          }
+        ]
+      },
+      {
+        key: "main-identities",
+        label: "Identities",
+        icon: "pi pi-users",
+        items: [
+          {
+            key: "main-identities-manage_authors",
+            label: "Manege Authors",
+            icon: "pi pi-users",
+            command: onIdentitiesManageAuthors
+          },
+          {
+            key: "main-identities-export_author",
+            label: "Save own Author",
+            icon: "pi pi-file-export",
+            disabled: disableIdentityActions.value,
+            command: onIdentitiesExportAuthor
+          },
+          {
+            key: "main-identities-export_identity",
+            label: "Save own Identity",
+            icon: "pi pi-file-export",
+            disabled: disableIdentityActions.value,
+            command: onIdentitiesExportIdentity
+          },
 
-      ]
-    },
-    {
-      key: "main-info",
-      label: "info",
-      icon: "pi pi-info-circle",
-      command: onShowInfo
-    }
-  ]);
+        ]
+      },
+      {
+        key: "main-info",
+        label: "info",
+        icon: "pi pi-info-circle",
+        command: onShowInfo
+      }
+    ];
+  });
+  const menuItems = reactive({
+    val: computedMenuItems.value
+  });
+  watch(computedMenuItems, (items) => menuItems.val = items);
 
   watch(open, (open) => {
     if(open) {
@@ -114,19 +121,23 @@
   })
 
   function onFileOpen() {
+    open.value = false;
     emit("do:showOpenDlg");
   }
 
   function onFileSave() {
+    open.value = false;
     emit("do:showSaveDlg");
   }
 
   function onFileImportPatchset() {
+    open.value = false;
     currentAction.value = "patchsetImportFile";
     showInpFileDlg.value = true;
   }
 
   function onIdentitiesManageAuthors() {
+    open.value = false;
     emit("do:showAuthorsDlg");
   }
 
@@ -144,11 +155,13 @@
   }
 
   function onIdentitiesExportIdentity() {
+    open.value = false;
     currentAction.value = "identityExportPasswd";
     showInpPasswdDlg.value = true;
   }
 
   function onShowInfo() {
+    open.value = false;
     showInfo.value = true;
   }
 
