@@ -102,7 +102,7 @@
 
       if(saveToStorage.value) {
         try {
-          await BrowserStorage.INSTANCE.saveIdentity(identity, key, saveToStorageEnc.value);
+          await BrowserStorage.INSTANCE.saveIdentity(identity, key, !saveToStorageEnc.value);
         } catch (e) {
           console.error("unable to store identity:", e);
           errorMsg.value = "there was an error while storing the identity";
