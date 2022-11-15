@@ -97,7 +97,7 @@
   }
 
   function onIdentitiesManageAuthors() {
-
+    emit("do:showAuthorsDlg");
   }
 
   function onIdentitiesExportAuthor() {

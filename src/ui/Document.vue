@@ -8,6 +8,7 @@
 
     <OpenDialog v-model="showOpenDlg"></OpenDialog>
     <SaveChangesDlg v-model="showSaveDlg"></SaveChangesDlg>
+    <ManageAuthorsDlg v-model="showAuthorsDlg"></ManageAuthorsDlg>
   </div>
 </template>
 
@@ -17,9 +18,11 @@
   import FileSpec from "@/ui/file_spec/FileSpec.vue";
   import MenuPanel from "@/ui/menu_panel/MenuPanel.vue";
   import SaveChangesDlg from "@/ui/dialogs/SaveChangesDlg.vue";
+  import ManageAuthorsDlg from "@/ui/dialogs/ManageAuthorsDlg.vue";
 
   const showOpenDlg = ref(true);
   const showSaveDlg = ref(false);
+  const showAuthorsDlg = ref(false);
 </script>
 
 <style lang="scss" scoped>
