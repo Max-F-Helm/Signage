@@ -1,19 +1,24 @@
 <template class="max-w-full max-h-full">
   <div>
-    <InfoBar></InfoBar>
+    <MenuPanel @doShowOpenDlg="showOpenDlg = true"
+               @doShowSaveDlg="showSaveDlg = true"></MenuPanel>
+
+    <FileSpec @doShowSaveDlg="showSaveDlg = true"></FileSpec>
 
     <OpenDialog v-model="showOpenDlg"></OpenDialog>
-    <FileSpec></FileSpec>
+    <SaveChangesDlg v-model="showSaveDlg"></SaveChangesDlg>
   </div>
 </template>
 
 <script lang="ts" setup>
-  import OpenDialog from "@/ui/open_dlg/OpenDialog.vue";
-  import InfoBar from "@/ui/InfoBar.vue";
-  import FileSpec from "@/ui/file_spec/FileSpec.vue";
   import {ref} from "vue";
+  import OpenDialog from "@/ui/dialogs/open_dlg/OpenDialog.vue";
+  import FileSpec from "@/ui/file_spec/FileSpec.vue";
+  import MenuPanel from "@/ui/menu_panel/MenuPanel.vue";
+  import SaveChangesDlg from "@/ui/dialogs/SaveChangesDlg.vue";
 
-  const showOpenDlg = ref<boolean>(true);
+  const showOpenDlg = ref(true);
+  const showSaveDlg = ref(false);
 </script>
 
 <style lang="scss" scoped>

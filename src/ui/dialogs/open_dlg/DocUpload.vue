@@ -53,7 +53,7 @@
   import {Buffer} from "buffer";
   import BufferReader from "@/processing/buffer-reader";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
-  import FileUploadLight from "@/ui/open_dlg/FileUploadLight.vue";
+  import FileUploadLight from "@/ui/utils/FileUploadLight.vue";
   import {loadFile} from "@/ui/utils/utils";
   import BrowserStorage from "@/BrowserStorage";
 

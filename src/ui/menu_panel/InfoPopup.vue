@@ -1,8 +1,8 @@
 <template>
-  <PButton class="p-button-outlined" icon="pi pi-info-circle" @click="visibleLeft = true"/>
-  <Sidebar v-model:visible="visibleLeft" :baseZIndex="10000" class="p-sidebar-md">
-    <h3>Projekt Informationen</h3><br>
-    <p>
+  <Dialog v-model:visible="show" :modal="true" :closeOnEscape="true" :dismissableMask="true" :closable="true" :maximizable="true"
+          header="Abut this service">
+    <!-- TODO -->
+    <div style="max-width: 90vw;">
       Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
       dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
       kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
@@ -11,18 +11,33 @@
       sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy
       eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo
       duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-    </p>
-  </Sidebar>
+    </div>
+  </Dialog>
 </template>
 
-<script lang="ts" setup>
-  import PButton from "primevue/button";
-  import Sidebar from "primevue/sidebar";
-  import {ref} from "vue";
+<script setup lang="ts">
+ import {computed} from "vue";
+ import Dialog from "primevue/dialog";
 
-  const visibleLeft = ref(false);
+ const props = defineProps({
+   modelValue: {
+     required: true,
+     type: Boolean
+   }
+ });
+
+ const emit = defineEmits(["update:modelValue"]);
+
+ const show = computed({
+   get(): boolean {
+     return props.modelValue;
+   },
+   set(newVal: boolean) {
+     emit("update:modelValue", newVal);
+   }
+ })
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 
 </style>

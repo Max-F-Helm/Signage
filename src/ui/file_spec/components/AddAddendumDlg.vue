@@ -25,7 +25,7 @@ import {computed, ref} from "vue";
 import PButton from "primevue/button";
 import InputText from "primevue/inputtext";
 import Dialog from "primevue/dialog";
-import FileUploadLight from "@/ui/open_dlg/FileUploadLight.vue";
+import FileUploadLight from "@/ui/utils/FileUploadLight.vue";
 import type {FileUploadSelectEvent} from "primevue/fileupload";
 import type {NewAddendumData} from "@/ui/file_spec/Helpers";
 import {loadFile, sniffMime} from "@/ui/utils/utils";

@@ -46,7 +46,7 @@
   import PButton from "primevue/button";
   import InputText from "primevue/inputtext";
   import Checkbox from "primevue/checkbox";
-  import FileUploadLight from "@/ui/open_dlg/FileUploadLight.vue";
+  import FileUploadLight from "@/ui/utils/FileUploadLight.vue";
   import type {FileUploadSelectEvent} from "primevue/fileupload";
   import {download, loadFile, sniffMime} from "@/ui/utils/utils";
   import FileProcessorWrapper from "@/FileProcessorWrapper";

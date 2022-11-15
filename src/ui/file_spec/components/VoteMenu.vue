@@ -22,9 +22,8 @@
 import PButton from "primevue/button";
 import SplitButton from "primevue/splitbutton";
 import Card from "primevue/card";
-import Dialog from "primevue/dialog";
 import { useToast } from "primevue/usetoast";
-import {onMounted, onUnmounted, ref, watch} from "vue";
+import {onMounted, onUnmounted, ref} from "vue";
 import type {MenuItem} from "primevue/menuitem";
 import FileProcessorWrapper from "@/FileProcessorWrapper";
 import {FrameType} from "@/processing/model/Frame";
@@ -32,8 +31,6 @@ import type Vote from "@/processing/model/Vote";
 import IdentityProcessor from "@/processing/identity-processor";
 import AddAddendumDlg from "@/ui/file_spec/components/AddAddendumDlg.vue";
 import type {NewAddendumData} from "@/ui/file_spec/Helpers";
-import Bill from "@/processing/bill";
-import {download} from "@/ui/utils/utils";
 
 const emit = defineEmits(["proposalModified"]);
 

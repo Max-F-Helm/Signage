@@ -24,23 +24,23 @@
   import BrowserStorage from "@/BrowserStorage";
 
   const props = defineProps({
-    show: {
+    modelValue: {
       required: true,
       type: Boolean
     }
   });
 
-  const emit = defineEmits(["update:show"]);
+  const emit = defineEmits(["update:modelValue"]);
 
   const fileProcessor = FileProcessorWrapper.INSTANCE;
   const toast = useToast();
 
   const show = computed({
     get() {
-      return props.show;
+      return props.modelValue;
     },
     set(newVal) {
-      emit("update:show", newVal);
+      emit("update:modelValue", newVal);
     }
   });
 

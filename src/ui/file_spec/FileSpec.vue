@@ -2,8 +2,7 @@
   <div>
     <Users :authors="authors"></Users>
     <Contents :frames="frames"></Contents>
-    <VoteMenu @proposalModified="showSaveDlg = true"></VoteMenu>
-    <SaveChangesDlg v-model:show="showSaveDlg"></SaveChangesDlg>
+    <VoteMenu @proposalModified="onModified"></VoteMenu>
   </div>
 </template>
 
@@ -15,16 +14,20 @@
   import type Author from "@/processing/model/Author";
   import type Frame from "@/processing/model/Frame";
   import VoteMenu from "@/ui/file_spec/components/VoteMenu.vue";
-  import SaveChangesDlg from "@/ui/file_spec/components/SaveChangesDlg.vue";
   import debounce from "debounce";
   import {useToast} from "primevue/usetoast";
 
   const fileProcessor = FileProcessorWrapper.INSTANCE;
   const toast = useToast();
 
+  const emit = defineEmits(["doShowSaveDlg"]);
+
   const authors = ref<Author[]>([]);
   const frames = ref<Frame[]>([]);
-  const showSaveDlg = ref(false);
+
+  function onModified() {
+    emit("doShowSaveDlg");
+  }
 
   function reloadContent() {
     if (fileProcessor.isFileLoaded()) {

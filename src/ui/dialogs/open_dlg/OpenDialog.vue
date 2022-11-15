@@ -1,5 +1,5 @@
 <template>
-  <Dialog v-model:visible="open" :closable="false" :modal="true" contentClass="big-dlg"
+  <Dialog v-model:visible="open" :closable="true" :modal="true" contentClass="big-dlg"
           header="Open or Create a Document">
     <Steps v-model:value="currentStep" :readonly="true" :steps="steps">
       <template #od-id_choice>
@@ -56,15 +56,15 @@
   import Steps from "@/ui/utils/Steps.vue";
   import type {StepsItem} from "@/ui/utils/Steps-exports";
   import {fold} from "@/ui/utils/utils";
-  import IdUpload from "@/ui/open_dlg/IdUpload.vue";
-  import IdChoice from "@/ui/open_dlg/IdChoice.vue";
-  import IdNew from "@/ui/open_dlg/IdNew.vue";
-  import DocChoice from "@/ui/open_dlg/DocChoice.vue";
-  import DocUpload from "@/ui/open_dlg/DocUpload.vue";
-  import DocNew from "@/ui/open_dlg/DocNew.vue";
-  import DocInitialAddendum from "@/ui/open_dlg/DocInitialAddendum.vue";
-  import IdStorage from "@/ui/open_dlg/IdStorage.vue";
-  import DocStorage from "@/ui/open_dlg/DocStorage.vue";
+  import IdUpload from "@/ui/dialogs/open_dlg/IdUpload.vue";
+  import IdChoice from "@/ui/dialogs/open_dlg/IdChoice.vue";
+  import IdNew from "@/ui/dialogs/open_dlg/IdNew.vue";
+  import DocChoice from "@/ui/dialogs/open_dlg/DocChoice.vue";
+  import DocUpload from "@/ui/dialogs/open_dlg/DocUpload.vue";
+  import DocNew from "@/ui/dialogs/open_dlg/DocNew.vue";
+  import DocInitialAddendum from "@/ui/dialogs/open_dlg/DocInitialAddendum.vue";
+  import IdStorage from "@/ui/dialogs/open_dlg/IdStorage.vue";
+  import DocStorage from "@/ui/dialogs/open_dlg/DocStorage.vue";
 
   const emit = defineEmits(["update:modelValue"]);
 
