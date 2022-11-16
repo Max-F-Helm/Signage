@@ -1,8 +1,8 @@
 <template>
   <div class="flex flex-column row-gap-3">
     <div>
-      <RadioButton v-model="choice" inputId="idChoice_mode_upl" name="idChoice_mode" value="storage"/>
-      <label class="ml-2" for="idChoice_mode_upl">Select Stored</label>
+      <RadioButton v-model="choice" inputId="idChoice_mode_sto" name="idChoice_mode" value="storage"/>
+      <label class="ml-2" for="idChoice_mode_sto">Select Stored</label>
     </div>
     <div>
       <RadioButton v-model="choice" inputId="idChoice_mode_upl" name="idChoice_mode" value="upload"/>
@@ -10,7 +10,7 @@
     </div>
     <div>
       <RadioButton v-model="choice" inputId="idChoice_mode_new" name="idChoice_mode" value="new"/>
-      <label class="ml-2" for="idChoice_mode_upl">New</label>
+      <label class="ml-2" for="idChoice_mode_new">New</label>
     </div>
   </div>
 </template>
