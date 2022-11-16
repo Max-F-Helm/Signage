@@ -165,11 +165,20 @@ import {computed, onBeforeMount, ref, watch} from "vue";
   }
 
   async function reloadStoredAuthors() {
-    storedAuthors.value = Object.entries(await browserStorage.availableAuthors()).map(([k]) => {
-      return {
-        name: k
-      }
-    });
+    const self = FileProcessorWrapper.INSTANCE.getIdentity();
+    let selfKey: string;
+    if(self !== null)
+      selfKey = `${self.name} (${self.mail})`;
+    else
+      selfKey = "";
+
+    storedAuthors.value = Object.entries(await browserStorage.availableAuthors())
+        .filter(([k]) => k !== selfKey)
+        .map(([k]) => {
+          return {
+            name: k
+          }
+        });
   }
 
   onBeforeMount(async () => {
