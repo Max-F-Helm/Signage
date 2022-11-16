@@ -11,7 +11,7 @@ import type Addendum from "./model/Addendum";
 import type Vote from "./model/Vote";
 import type {Identity} from "@/processing/identity-processor";
 import IdentityProcessor from "@/processing/identity-processor";
-import {hashFrame, isUint8ArrayArrUnique} from "@/processing/utils";
+import {hashFrame, isArrUnique} from "@/processing/utils";
 
 const FILE_SPEC_VERSION = 1;
 const FRAME_TYPE_ADDENDUM = 1;
@@ -273,7 +273,7 @@ export class FileProcessor {
                 return false;
 
         const parents = chain.map(f => f.hash);
-        if(!isUint8ArrayArrUnique(parents))
+        if(!isArrUnique(parents))
             return false;
 
         for(const f of chain){

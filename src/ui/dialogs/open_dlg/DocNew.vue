@@ -2,7 +2,7 @@
   <div class="flex flex-column row-gap-3">
     <div>
       Authors (excluding yourself):
-      <TabView>
+      <TabView v-model:activeIndex="openTab">
         <TabPanel header="Upload Authors">
           <FileUpload :fileLimit="32767" :multiple="true" :showCancelButton="false"
                       :showUploadButton="false" mode="advanced"
@@ -60,7 +60,7 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, onBeforeMount, ref, watch} from "vue";
+  import {computed, onBeforeMount, ref, watch} from "vue";
   import PButton from "primevue/button";
   import Password from "primevue/password";
   import TabView from "primevue/tabview";
@@ -76,12 +76,15 @@ import {computed, onBeforeMount, ref, watch} from "vue";
   import BufferReader from "@/processing/buffer-reader";
   import {loadFile} from "@/ui/utils/utils";
   import BrowserStorage from "@/BrowserStorage";
+  import {useToast} from "primevue/usetoast";
+  import {findDuplicates} from "@/processing/utils";
 
   interface Entry {
     name: string
   }
 
   const browserStorage = BrowserStorage.INSTANCE;
+  const toast = useToast();
 
   const emit = defineEmits(["update:ready"]);
 
@@ -91,6 +94,12 @@ import {computed, onBeforeMount, ref, watch} from "vue";
   const refPasswdInp = ref();
   const storedAuthors = ref<Entry[]>([]);
   const selectedStoredAuthors = ref<Entry[]>([]);
+  const openTab = ref(0);
+
+  watch(openTab, (tab) => {
+    if(tab === 1)
+      reloadStoredAuthors();
+  });
 
   function addAuthorFile(e: FileUploadSelectEvent) {
     authors.value = e.files;
@@ -124,7 +133,18 @@ import {computed, onBeforeMount, ref, watch} from "vue";
       const loadedAuthors: Author[] = [];
       for (const f of authors.value) {
         try {
-          loadedAuthors.push(await loadAuthor(f));
+          const author = await loadAuthor(f);
+
+          if(IdentityProcessor.equals(FileProcessorWrapper.INSTANCE.getIdentity()!, author)) {
+            toast.add({
+              severity: "warn",
+              summary: "Duplicate Author",
+              detail: "you can not add your own author-file; ignoring it",
+              life: 5000
+            });
+          } else {
+            loadedAuthors.push(author);
+          }
         } catch (e) {
           console.error("unable to create proposal: author load failed", e);
           errorMsg.value = `there was an error while creating the proposal (author-file ${f.name} is corrupted)`;
@@ -143,6 +163,19 @@ import {computed, onBeforeMount, ref, watch} from "vue";
       }
 
       loadedAuthors.push(await IdentityProcessor.toAuthor(FileProcessorWrapper.INSTANCE.getIdentity()!));
+
+      const duplicateAuthors = findDuplicates(loadedAuthors);
+      if(duplicateAuthors.length !== 0) {
+        toast.add({
+          severity: "warn",
+          summary: "Duplicate Author",
+          detail: "you can not add an author twice; ignoring it",
+          life: 5000
+        });
+
+        for(let i = duplicateAuthors.length - 1; i >= 0; i--)
+          loadedAuthors.splice(i, 1);
+      }
 
       try {
         await FileProcessorWrapper.INSTANCE.createFile(loadedAuthors);
