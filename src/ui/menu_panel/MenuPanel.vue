@@ -199,6 +199,8 @@
       console.error("error while exporting the current identity", e);
       showErrToast("unable to export current identity", e);
     }
+
+    currentAction.value = "";
   }
 
   async function importPatchset(file: File) {
@@ -217,6 +219,8 @@
       console.error("error while importing the Patchset", e);
       showErrToast("unable to import the Patchset", e);
     }
+
+    currentAction.value = "";
   }
 
   function showErrToast(summary: string, e: any) {
