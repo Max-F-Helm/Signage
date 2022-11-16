@@ -62,6 +62,7 @@
   import type Addendum from "@/processing/model/Addendum";
   import {download, formatDateTime} from "@/ui/utils/utils";
   import {Buffer} from "buffer";
+  import {getExtension} from "mime/lite";
 
   const props = defineProps({
     val: {
@@ -103,8 +104,27 @@
   let blobUrl: string | null = null;
 
   function onDownload() {
-    //TODO infer file-extension from mime (if title has no extension)
-    download(props.val.data, props.val.title);
+    // infer file-extension from mime (if title has no extension)
+    let filename = props.val.title;
+    if(props.val.type !== "") {
+      let hasExtension = true;
+      const dotIdx = filename.lastIndexOf(".");
+      if(dotIdx > 0 && dotIdx < filename.length - 1) {
+        // do not count long extensions
+        if((filename.length - (dotIdx + 1)) > 6)
+          hasExtension = false;
+      } else {
+        hasExtension = false;
+      }
+
+      if(!hasExtension) {
+        const extension = getExtension(props.val.type);
+        if(extension !== null)
+          filename += "." + extension;
+      }
+    }
+
+    download(props.val.data, filename);
   }
 
   function asText(): string {
