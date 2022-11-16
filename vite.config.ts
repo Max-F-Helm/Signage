@@ -13,5 +13,8 @@ export default defineConfig({
   },
   define: {
     "global": {},
+  },
+  build: {
+    target: "ES2021"
   }
 })

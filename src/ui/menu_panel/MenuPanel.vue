@@ -42,6 +42,7 @@
   /** current action for dlg-callbacks; values: "identityExportPasswd", "patchsetImportFile" */
   const currentAction = ref("");
 
+  //TODO some icons are not displayed
   //XXX PanelMenu break if it gets items from a computed val
   const computedMenuItems = computed<MenuItem[]>(() => {
     return [
