@@ -15,6 +15,7 @@ export default defineConfig({
     "global": {},
   },
   build: {
-    target: "ES2021"
+    target: "ES2021",
+    sourcemap: true
   }
 })
