@@ -1,7 +1,8 @@
 <template>
   <FileUpload :fileLimit="1" :multiple="false" :showCancelButton="false"
               :showUploadButton="false" mode="advanced"
-              @remove="e => emit('remove', e)" @select="e => emit('select', e)">
+              @remove="(e: FileUploadRemoveEvent) => emit('remove', e)"
+              @select="(e: FileUploadSelectEvent) => emit('select', e)">
     <template #content="{ files, uploadedFiles, removeFileCallback }">
       <div v-if="files.length > 0">
         <div class="flex flex-wrap p-1">
@@ -25,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import FileUpload from "primevue/fileupload";
+import FileUpload, {type FileUploadRemoveEvent, type FileUploadSelectEvent} from "primevue/fileupload";
 import PButton from "primevue/button";
 
 const emit = defineEmits(["remove", "select"]);

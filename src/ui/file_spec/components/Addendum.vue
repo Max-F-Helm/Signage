@@ -62,7 +62,7 @@
   import type Addendum from "@/processing/model/Addendum";
   import {download, formatDateTime} from "@/ui/utils/utils";
   import {Buffer} from "buffer";
-  import {getExtension} from "mime/lite";
+  import mime from "mime/lite";
 
   const props = defineProps({
     val: {
@@ -118,7 +118,7 @@
       }
 
       if(!hasExtension) {
-        const extension = getExtension(props.val.type);
+        const extension = mime.getExtension(props.val.type);
         if(extension !== null)
           filename += "." + extension;
       }
