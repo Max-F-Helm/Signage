@@ -1,0 +1,78 @@
+@startuml
+
+skinparam linetype ortho
+
+rectangle " " as spec {
+json File_Spec {
+   "SpecVersion": "u8; = 2",
+   "Proposal": {
+    "AuthorList": {
+        "NumberOfAuthors": "u16",
+        "Author-0": {
+            "Name": "string",
+            "Mail": "string",
+            "PublicKey": "blob-32",
+            "SignCount": "u32; = <number of frames which were signed by this author>",
+            "Signature": "u512; = _sign(_hash(_frame))"
+        },
+        "...": "more Authors"
+     },
+    "GenesisVal": "u256",
+
+    "Addendum": {
+        "Type": "u8; = 1",
+        "HashOfPrevFrame": "u256",
+        "Timestamp": "b7; UNIX-Timestamp in ms",
+        "AuthorRef": "u16; <index of author>",
+        "Title": "string",
+        "Mime": "string",
+        "DataLength": "u32; <number of bytes of Data>",
+        "Data": "blob",
+        "Hash": "u256; = _hash(_frame)"
+    },
+    "Vote": {
+        "Type": "u8; = 2",
+        "HashOfPrevFrame": "u256",
+        "Timestamp": "b7; UNIX-Timestamp in ms",
+        "AuthorRef": "u16; <index of author>",
+        "HashOfTargetAddendum": "u256",
+        "Vote": "u8; 0 or 1",
+        "Hash": "u256; = _hash(_frame)",
+        "Signature": "u512; = _sign(_hash(_frame))"
+    },
+    "...": "more Vote / Addendum"
+   }
+}
+}
+
+rectangle " " as notes {
+card symbols [
+   <b>Symbols</b>
+   --
+   - u$x: $x bits long unsigned integer
+   - b$x: $x bytes
+   - _frame: data of the current frame
+   - _hash($inp): hash of $inp
+   - _sign($inp): signature of $inp with the current authors private key
+]
+
+card notes [
+    <b>Notes</b>
+    --
+    - all bytes are stored big-endian
+    - strings are 0-terminated UTF-8
+]
+
+card requirements [
+    <b>Function requirements</b>
+    --
+    - the author of an Addendum has to vote positive for it (at the time of the Addendum creation)
+    - Proposals are accepted if every author votes positive for the latest Addendum
+    - only the latest Addendum may be voted on
+    - at file-loading all frames have to be validated (including their chronological order) (+ the latest frame must be in the past)
+]
+}
+
+spec --[hidden] notes
+
+@enduml
