@@ -5,30 +5,40 @@ skinparam linetype ortho
 start
 
 group "load + read version"
-    split
-        :file-password<
-        -> string;
-        :digest;
-        -> bin;
-    split again
-        :file-data<
-        -> bin;
-    end split
-    :decrypt;
+    :file-data<
     -> bin;
 
     :read version;
     if (check version supported) then (no)
         :report error;
-        end
+        stop
+    else (yes)
     endif
 
     -> bin;
-    (A)
+end group
+
+group "retrieve Proposal-Key"
+    :read NumberOfAuthors;
+
+    repeat :read Key;
+        :try to decrypt Proposal-Key;
+        if (decryption successful) then (yes)
+            :keep key;
+            break
+        else (no)
+        endif
+    repeat while (more keys available) is (yes) not (no)
+    if (got Proposal-Key) then (no)
+        :report error;
+        stop
+    else (yes)
+        :decrypt rest of file;
+        -> bin;
+    endif
 end group
 
 group "read autors"
-    (A)
     -> bin;
     repeat
     group "read author"
@@ -42,15 +52,14 @@ group "read autors"
         if (check valid) then (no)
             :report warning;
             :discard;
+        else (yes)
         endif
     end group
     repeat while (more authors) is (yes) not (no)
     -> Author[] + bin;
-    (B)
 end group
 
 group "read contents"
-    (B)
     -> bin;
     :read Genesis-Value;
     repeat :read type;
@@ -96,11 +105,9 @@ group "read contents"
     endswitch
     repeat while (more data) is (yes) not (no)
     -> Addendum[] + Vote[];
-    (C)
 end group
 
 group "validate"
-    (C)
     -> Author[] + Addendum[] + Vote[];
     :order frames by hash-chain;
 
@@ -114,7 +121,8 @@ group "validate"
 
     if (all checks passed) then (no)
         :report warning;
-        end
+        stop
+    else (yes)
     endif
 
     -> File;

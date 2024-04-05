@@ -4,44 +4,51 @@ skinparam linetype ortho
 
 rectangle " " as spec {
 json File_Spec {
-   "SpecVersion": "u8; = 2",
-   "Proposal": {
-    "AuthorList": {
-        "NumberOfAuthors": "u16",
-        "Author-0": {
-            "Name": "string",
-            "Mail": "string",
-            "PublicKey": "blob-32",
-            "SignCount": "u32; = <number of frames which were signed by this author>",
+    "SpecVersion": "u8; = 2",
+
+    "NumberOfAuthors": "u16",
+    "ProposalKeys": {
+        "Key-0": "bTODO; <Proposal-Key encrypted with the Author-0s public key>",
+        "...": "more keys"
+    },
+
+    "Proposal": {
+        "AuthorList": {
+            "Author-0": {
+                "Name": "string",
+                "Mail": "string",
+                "PublicKey": "blob-32",
+                "SignCount": "u32; = <number of frames which were signed by this author>",
+                "Signature": "u512; = _sign(_hash(_frame))"
+            },
+            "...": "more Authors"
+        },
+
+        "GenesisVal": "u256",
+
+        "Addendum": {
+            "Type": "u8; = 1",
+            "HashOfPrevFrame": "u256",
+            "Timestamp": "b7; UNIX-Timestamp in ms",
+            "AuthorRef": "u16; <index of author>",
+            "Title": "string",
+            "Mime": "string",
+            "DataLength": "u32; <number of bytes of Data>",
+            "Data": "blob",
+            "Hash": "u256; = _hash(_frame)"
+        },
+        "Vote": {
+            "Type": "u8; = 2",
+            "HashOfPrevFrame": "u256",
+            "Timestamp": "b7; UNIX-Timestamp in ms",
+            "AuthorRef": "u16; <index of author>",
+            "HashOfTargetAddendum": "u256",
+            "Vote": "u8; 0 or 1",
+            "Hash": "u256; = _hash(_frame)",
             "Signature": "u512; = _sign(_hash(_frame))"
         },
-        "...": "more Authors"
-     },
-    "GenesisVal": "u256",
-
-    "Addendum": {
-        "Type": "u8; = 1",
-        "HashOfPrevFrame": "u256",
-        "Timestamp": "b7; UNIX-Timestamp in ms",
-        "AuthorRef": "u16; <index of author>",
-        "Title": "string",
-        "Mime": "string",
-        "DataLength": "u32; <number of bytes of Data>",
-        "Data": "blob",
-        "Hash": "u256; = _hash(_frame)"
-    },
-    "Vote": {
-        "Type": "u8; = 2",
-        "HashOfPrevFrame": "u256",
-        "Timestamp": "b7; UNIX-Timestamp in ms",
-        "AuthorRef": "u16; <index of author>",
-        "HashOfTargetAddendum": "u256",
-        "Vote": "u8; 0 or 1",
-        "Hash": "u256; = _hash(_frame)",
-        "Signature": "u512; = _sign(_hash(_frame))"
-    },
-    "...": "more Vote / Addendum"
-   }
+        "...": "more Vote / Addendum"
+    }
 }
 }
 
@@ -61,6 +68,7 @@ card notes [
     --
     - all bytes are stored big-endian
     - strings are 0-terminated UTF-8
+    - all data of 'Proposal' is encrypted with the symmetric "Proposal-Key"
 ]
 
 card requirements [
