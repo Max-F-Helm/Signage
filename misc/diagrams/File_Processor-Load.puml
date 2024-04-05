@@ -1,0 +1,125 @@
+@startuml
+
+skinparam linetype ortho
+
+start
+
+group "load + read version"
+    split
+        :file-password<
+        -> string;
+        :digest;
+        -> bin;
+    split again
+        :file-data<
+        -> bin;
+    end split
+    :decrypt;
+    -> bin;
+
+    :read version;
+    if (check version supported) then (no)
+        :report error;
+        end
+    endif
+
+    -> bin;
+    (A)
+end group
+
+group "read autors"
+    (A)
+    -> bin;
+    repeat
+    group "read author"
+        :read name;
+        :read mail;
+        :read pub_key;
+        :read sign_count;
+        :read signature;
+        :construct Author-Obj;
+        :verify signature;
+        if (check valid) then (no)
+            :report warning;
+            :discard;
+        endif
+    end group
+    repeat while (more authors) is (yes) not (no)
+    -> Author[] + bin;
+    (B)
+end group
+
+group "read contents"
+    (B)
+    -> bin;
+    :read Genesis-Value;
+    repeat :read type;
+
+    switch (type)
+    case (1)
+    group "read Addendum"
+        :read fields (HashOfPrevFrame, ..., Hash);
+        :hash frame;
+        if (hash match) then (yes)
+            :construct Addendum-Obj;
+            :store obj;
+            -> Addendum;
+        else (no)
+            :report warning;
+            :discard;
+        endif
+    end group
+
+    case (2)
+    group "read Vote"
+        :read fields (HashOfPrevFrame, ..., Hash, Signature);
+        :hash frame;
+        if (hash match) then (yes)
+            :verify signature;
+            if (signature valid) then (yes)
+                :construct Vote-Obj;
+                :store obj;
+                -> Vote;
+            else (no)
+                :report warning;
+                :discard;
+            endif
+        else (no)
+            :report warning;
+            :discard;
+        endif
+    end group
+
+    case (default)
+        :report error;
+        end
+    endswitch
+    repeat while (more data) is (yes) not (no)
+    -> Addendum[] + Vote[];
+    (C)
+end group
+
+group "validate"
+    (C)
+    -> Author[] + Addendum[] + Vote[];
+    :order frames by hash-chain;
+
+    :check if every frame (+ genesis) has exactly one child (except the last frame);
+    :check if every timestamp is ascending;
+    :check if every votes TargetAddendum exists;
+    :check if every AuthorRef is valid;
+    :check if every Addendum has >= 1 Vote;
+    :check if user-clock is behind timestamp of last Addendum;
+    :check if AuthorSignCount match;
+
+    if (all checks passed) then (no)
+        :report warning;
+        end
+    endif
+
+    -> File;
+end group
+
+stop
+
+@enduml
