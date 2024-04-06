@@ -135,13 +135,6 @@ export default class FileProcessorWrapper {
         return this.fileProcessor.exportChanges();
     }
 
-    async exportFrames(count: number): Promise<Buffer> {
-        if(this.fileProcessor === null)
-            throw new IllegalStateException("not initialized");
-
-        return this.fileProcessor.exportFrames(count);
-    }
-
     clearChanges() {
         if(this.fileProcessor === null)
             throw new IllegalStateException("not initialized");

@@ -130,4 +130,11 @@ export default class BufferReader {
 
         return this.buffer.toString("utf8", start, start + length);
     }
+
+    readRest(): Uint8Array {
+        const length = this.buffer.byteLength - this.pos;
+        const ret = new Uint8Array(this.buffer.buffer, this.pos, length);
+        this.pos += length;
+        return ret;
+    }
 }

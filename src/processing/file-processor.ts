@@ -1,8 +1,8 @@
-import type {Buffer} from "buffer";
+import {Buffer} from "buffer";
 import deepEqual from "@/deep-equals";
-import type BufferReader from "./buffer-reader";
+import BufferReader from "./buffer-reader";
 import BufferWriter from "./buffer-writer";
-import {FileContentsException, IllegalArgumentException, IllegalStateException} from "./exceptions";
+import {AssertionError, FileContentsException, IllegalArgumentException, IllegalStateException} from "./exceptions";
 import Bill from "./bill";
 import type Frame from "./model/Frame";
 import {FrameType} from "./model/Frame";
@@ -13,10 +13,13 @@ import type {Identity} from "@/processing/identity-processor";
 import IdentityProcessor from "@/processing/identity-processor";
 import {hashFrame, isArrUnique} from "@/processing/utils";
 
-const FILE_SPEC_VERSION = 1;
+const FILE_SPEC_VERSION = 2;
+
 const FRAME_TYPE_ADDENDUM = 1;
 const FRAME_TYPE_VOTE = 2;
 const TIMESTAMP_BYTES = 56 / 8;
+const PROPOSAL_KEY_BYTES = (256 / 8);
+const ENC_PROPOSAL_KEY_BYTES = PROPOSAL_KEY_BYTES + Bill.CRYPT_ASYM_EXTRA_BYTES;
 
 interface GenesisDummyFrame extends Frame {}
 
@@ -30,9 +33,11 @@ export interface Proposal {
 export class FileProcessor {
 
     private readonly errorCallback: ErrorCallback;
-    private readonly identity: Identity | null;
+    private readonly identity: Identity;
 
     private author: Author | null = null;
+    private authorCount: number = 0;
+    private proposalKey: Uint8Array | null = null;
     private authors: Author[] | undefined;
     private frames: Frame[] | undefined;
     private genesisValue: Uint8Array | undefined;
@@ -40,6 +45,9 @@ export class FileProcessor {
     private readonly addedFrames: Frame[] = [];
 
     constructor(identity: Identity, errorCallback: ErrorCallback) {
+        if(identity.keypair.privateKey == null)
+            throw new IllegalArgumentException("Identity for FileProcessor must have a private_key");
+
         this.identity = identity;
         this.errorCallback = errorCallback;
     }
@@ -60,13 +68,11 @@ export class FileProcessor {
 
     //region create file
     async createFile(authors: Author[]) {
-        if(this.identity === null)
-            throw new IllegalStateException("no identity was set");
-
-        const author = authors.find(a => IdentityProcessor.equals(a, this.identity!));
+        const author = authors.find(a => IdentityProcessor.equals(a, this.identity));
         if(author === undefined)
             throw new IllegalArgumentException("set identity must be part of authors");
 
+        this.proposalKey = await Bill.random_bytes(PROPOSAL_KEY_BYTES);
         this.authors = authors;
         this.frames = [];
         this.genesisValue = await Bill.random_bytes(Bill.HASH_BYTES);
@@ -77,14 +83,15 @@ export class FileProcessor {
     //region load file
     async loadFile(data: BufferReader) {
         this.readAndCheckFileVersion(data);
-        this.authors = await this.loadAuthors(data);
+        const proposalData = await this.decryptProposal(data);
 
+        this.authors = await this.loadAuthors(proposalData);
         if(this.author === null)
-            this.errorCallback("local author is not in the list of authors");
+            throw new AssertionError("was able to decrypt the proposal even if Identity is not in author-list; how is that possible");
 
-        this.genesisValue = data.readUint8Array(Bill.HASH_BYTES);
+        this.genesisValue = proposalData.readUint8Array(Bill.HASH_BYTES);
 
-        const loadedFrames = await this.loadFrames(data);
+        const loadedFrames = await this.loadFrames(proposalData);
         const genesisFrame: GenesisDummyFrame = {
             frameType: FrameType.Invalid,
             // @ts-ignore
@@ -109,21 +116,47 @@ export class FileProcessor {
             throw new FileContentsException("file has unsupported version");
     }
 
-    private async loadAuthors(data: BufferReader): Promise<Author[]> {
+    private async decryptProposal(data: BufferReader): Promise<BufferReader> {
         const authorCount = data.readUInt16BE();
-        const authors = [] as Author[];
+        if(authorCount < 0)
+            throw new FileContentsException("invalid NumberOfAuthors");
 
-        for(let i = 0; i < authorCount; i++){
+        let i = 0;
+        for(; i < authorCount; i++) {
+            const encKey = data.readUint8Array(ENC_PROPOSAL_KEY_BYTES);
+            try {
+                this.proposalKey = await Bill.decryptAsym(encKey, this.identity.keypair);
+                i++;
+                break;
+            } catch(ignored){}
+        }
+        if(this.proposalKey === null)
+            throw new FileContentsException("this Identity cannot decrypt this file");
+
+        data.setPosRel((authorCount - i) * ENC_PROPOSAL_KEY_BYTES);// skip over unread keys
+        const proposalDataEnc = data.readRest();
+
+        try {
+            const proposalData = await Bill.decrypt(proposalDataEnc, this.proposalKey);
+            return new BufferReader(Buffer.from(proposalData));
+        } catch(e) {
+            throw new FileContentsException("unable to decrypt proposal", e as Error);
+        }
+    }
+
+    private async loadAuthors(data: BufferReader): Promise<Author[]> {
+        const authors: Author[] = [];
+
+        for(let i = 0; i < this.authorCount; i++){
             try {
                 const author = await IdentityProcessor.loadAuthor(data);
-                authors.push(author);
 
-                if(this.identity !== null) {
-                    if(IdentityProcessor.equals(author, this.identity)) {
-                        author.keypair.privateKey = this.identity.keypair.privateKey;
-                        this.author = author;
-                    }
+                if(this.author === null && IdentityProcessor.equals(author, this.identity)) {
+                    author.keypair.privateKey = this.identity.keypair.privateKey;
+                    this.author = author;
                 }
+
+                authors.push(author);
             } catch(e) {
                 this.errorCallback(`invalid author (${e}); dropping`);
             }
@@ -133,7 +166,8 @@ export class FileProcessor {
     }
 
     private async loadFrames(data: BufferReader): Promise<Frame[]> {
-        const frames = [] as Frame[];
+        const frames: Frame[] = [];
+
         while(!data.isAtEnd()) {
             let frame: Frame | null = null;
             const type = data.readUInt8();
@@ -147,9 +181,11 @@ export class FileProcessor {
                 default:
                     throw new FileContentsException("invalid frame-type");
             }
+
             if(frame !== null)
                 frames.push(frame);
         }
+
         return frames;
     }
 
@@ -383,22 +419,40 @@ export class FileProcessor {
     async saveFile(): Promise<Buffer> {
         if(this.identity === null)
             throw new IllegalStateException("no identity was set");
-        if(this.authors === undefined)
+        if(this.authors === undefined || this.proposalKey === null)
             throw new IllegalStateException("no file is loaded");
 
         const data = new BufferWriter();
 
         data.writeUInt8(FILE_SPEC_VERSION);
-        await this.writeAuthors(data);
-        data.writeUint8Array(this.genesisValue!);
-        await this.writeFrames(data, this.frames!);
+
+        await this.saveProposalKey(data);
+
+        const proposalData = new BufferWriter();
+        await this.writeAuthors(proposalData);
+        proposalData.writeUint8Array(this.genesisValue!);
+        await this.writeFrames(proposalData, this.frames!);
+
+        const proposalDataEnc = await Bill.encrypt(proposalData.take(), this.proposalKey);
+        data.writeUint8Array(proposalDataEnc);
 
         return data.take();
     }
 
+    private async saveProposalKey(data: BufferWriter) {
+        const authors = this.authors!;
+        const key = this.proposalKey!;
+
+        data.writeUInt16BE(authors.length);
+
+        for(let author of authors) {
+            const keyEnc = await Bill.encryptAsym(key, author.keypair);
+            data.writeUint8Array(keyEnc);
+        }
+    }
+
     private async writeAuthors(data: BufferWriter) {
         const authors = this.authors!;
-        data.writeUInt16BE(authors.length);
 
         for(const author of authors) {
             if(author === this.author) {
@@ -559,11 +613,15 @@ export class FileProcessor {
 
     //region patches
     async importPatchSet(data: BufferReader) {
-        if(this.frames === undefined)
+        if(this.frames === undefined || this.proposalKey === null)
             throw new IllegalStateException("no file is loaded");
 
-        await this.importAuthor(data);
-        await this.importFrames(data);
+        const dataEnc = data.readRest();
+        const dataDec = await Bill.decrypt(dataEnc, this.proposalKey);
+        const dataReader = new BufferReader(new Buffer(dataDec));
+
+        await this.importAuthor(dataReader);
+        await this.importFrames(dataReader);
     }
 
     private async importAuthor(data: BufferReader) {
@@ -599,7 +657,7 @@ export class FileProcessor {
     }
 
     async exportChanges(): Promise<Buffer> {
-        if(this.frames === undefined)
+        if(this.frames === undefined || this.proposalKey === null)
             throw new IllegalStateException("no file is loaded");
         if(this.author === null)
             throw new IllegalStateException("no identity was set");
@@ -609,26 +667,9 @@ export class FileProcessor {
         await IdentityProcessor.signAndSaveAuthor(data, this.author);
         await this.writeFrames(data, this.addedFrames);
 
-        return data.take();
-    }
-
-    /**
-     * @param count number of frames to exported; counted from back to front
-     */
-    async exportFrames(count: number): Promise<Buffer> {
-        if(this.frames === undefined)
-            throw new IllegalStateException("no file is loaded");
-        if(this.author === null)
-            throw new IllegalStateException("no identity was set");
-
-        const data = new BufferWriter();
-
-        await IdentityProcessor.signAndSaveAuthor(data, this.author);
-
-        const frames = this.frames.slice(this.frames.length - count);
-        await this.writeFrames(data, frames);
-
-        return data.take();
+        const dataDec = data.take();
+        const dataEnc = await Bill.encrypt(dataDec, this.proposalKey);
+        return new Buffer(dataEnc);
     }
 
     getChangesCount(): number {

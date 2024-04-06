@@ -1,5 +1,5 @@
-// @ts-ignore
 import libsodium from "libsodium-wrappers";
+import {IllegalArgumentException} from "@/processing/exceptions";
 
 // for this use-case hardcoded values should be fine
 const KDF_SALT = new Uint8Array([11, 91, 88, 93, 18, 54, 53, 96, 39, 37, 73, 3, 93, 55, 69, 21]);
@@ -16,6 +16,7 @@ export default class Bill {
     static ECC_PUBLIC_KEY_BYTES: number;
     static ECC_PRIVATE_KEY_BYTES: number;
     static ECC_SIGNATURE_BYTES: number;
+    static CRYPT_ASYM_EXTRA_BYTES: number;
     static HASH_BYTES: number;
 
     static async wait_for_init(): Promise<null> {
@@ -24,6 +25,7 @@ export default class Bill {
         Bill.ECC_PUBLIC_KEY_BYTES = libsodium.crypto_sign_PUBLICKEYBYTES;
         Bill.ECC_PRIVATE_KEY_BYTES = libsodium.crypto_sign_SECRETKEYBYTES;
         Bill.ECC_SIGNATURE_BYTES = libsodium.crypto_sign_BYTES;
+        Bill.CRYPT_ASYM_EXTRA_BYTES = libsodium.crypto_box_SEALBYTES;
         Bill.HASH_BYTES = 256 / 8;
 
         return null;
@@ -38,6 +40,9 @@ export default class Bill {
     }
 
     static async sign_data(data: Uint8Array, keypair: Keypair): Promise<Uint8Array> {
+        if(keypair.privateKey === null)
+            throw new IllegalArgumentException("private_key must not be null");
+
         return libsodium.crypto_sign_detached(data, keypair.privateKey);
     }
 
@@ -63,6 +68,17 @@ export default class Bill {
 
     static async decrypt(data: Uint8Array, key: Uint8Array): Promise<Uint8Array> {
         return libsodium.crypto_secretbox_open_easy(data, CIPHER_NONCE, key);
+    }
+
+    static async encryptAsym(data: Uint8Array, receiverKeypair: Keypair): Promise<Uint8Array> {
+        return libsodium.crypto_box_seal(data, receiverKeypair.publicKey, 'uint8array');
+    }
+
+    static async decryptAsym(data: Uint8Array, receiverKeypair: Keypair): Promise<Uint8Array> {
+        if(receiverKeypair.privateKey === null)
+            throw new IllegalArgumentException("private_key must not be null");
+
+        return libsodium.crypto_box_seal_open(data, receiverKeypair.publicKey, receiverKeypair.privateKey, 'uint8array');
     }
 
     static async random_bytes(length: number): Promise<Uint8Array> {
