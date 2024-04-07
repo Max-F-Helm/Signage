@@ -1,20 +1,29 @@
 import should from "should";
 
+// type for AssertionError from should.js
+interface AssertionError extends Error {
+    stack?: string
+    operator: string
+    expected: any
+    actual: any
+}
+
 export function describe(desc: string, exec: () => Promise<void>): () => Promise<void> {
     return async () => {
         console.info("\nrunning test " + desc);
         try {
             await exec();
             console.info("test successful");
-        } catch (e) {
+        } catch (e: any) {
             if(e.hasOwnProperty("stack")){
                 // assertion error
+                const ex = e as AssertionError;
                 console.error(`test failed (assertion failed)\n
-message: ${e.message}
-operator: ${e.operator}
-expected: ${e.expected}
-actual: ${e.actual}
-file: ${extractTestLocation(e.stack)}
+message: ${ex.message}
+operator: ${ex.operator}
+expected: ${ex.expected}
+actual: ${ex.actual}
+file: ${extractTestLocation(ex.stack!)}
             `.trim());
             } else {
                 // general exception

@@ -14,7 +14,7 @@ import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.scss';
 
 import Bill from "@/processing/bill";
-Bill.wait_for_init().then();
+Bill.wait_for_init();
 
 const app = createApp(App);
 
