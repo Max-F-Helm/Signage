@@ -14,7 +14,11 @@ export default [
         };
 
         const authors = await generateAuthors();
-        authors.forEach(a => a.keypair.privateKey = null);// remove private key because they would normally not be loaded
+        // remove private key because they would normally not be loaded
+        authors.forEach(a => {
+            a.keypair.signPrivateKey = null;
+            a.keypair.cryptPrivateKey = null;
+        });
 
         const identity = await IdentityProcessor.createIdentity("a", "b", null);
         const processor = new FileProcessor(identity, errorCallback);
@@ -37,7 +41,7 @@ export default [
         await processor.loadFile(new BufferReader(saved));
         const proposalB = processor.getProposal();
 
-        should(deepEqual(proposalA, proposalB)).true("loaded not equal saved");
+        should(deepEqual(proposalA, proposalB)).true("loaded not equal to saved");
     }),
     describe("FileProcessor::full_test_nocrypt_fail", async () => {
         let errReported = false;
@@ -46,7 +50,11 @@ export default [
         };
 
         const authors = await generateAuthors();
-        authors.forEach(a => a.keypair.privateKey = null);// remove private key because they would normally not be loaded
+        // remove private key because they would normally not be loaded
+        authors.forEach(a => {
+            a.keypair.signPrivateKey = null;
+            a.keypair.cryptPrivateKey = null;
+        });
 
         const identity = await IdentityProcessor.createIdentity("a", "b", null);
         const processor = new FileProcessor(identity, errorCallback);
@@ -62,7 +70,7 @@ export default [
         const saved = await processor.saveFile();
 
         // corrupt data
-        saved[102]++;
+        saved[902]++;
 
         await sleep(10);
 

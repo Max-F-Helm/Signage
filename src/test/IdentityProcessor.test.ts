@@ -15,7 +15,8 @@ export default [
 
         should(identity.name).equal(name, "name");
         should(identity.mail).equal(mail, "mail");
-        should(identity.keypair.privateKey).not.be.null();
+        should(identity.keypair.signPrivateKey).not.be.null();
+        should(identity.keypair.cryptPrivateKey).not.be.null();
     }),
     describe("IdentityProcessor::save_and_load", async () => {
         const identity = await IdentityProcessor.createIdentity(name, mail, null);
@@ -55,7 +56,8 @@ export default [
         await IdentityProcessor.saveAuthor(buffer, author);
         const loaded = await IdentityProcessor.loadAuthor(new BufferReader(buffer.take()));
 
-        loaded.keypair.privateKey = identity.keypair.privateKey;
+        loaded.keypair.signPrivateKey = identity.keypair.signPrivateKey;
+        loaded.keypair.cryptPrivateKey = identity.keypair.cryptPrivateKey;
         should(deepEqual(loaded, author)).true("loaded not equal to saved");
     }),
     describe("IdentityProcessor::save_load_author_fail", async () => {

@@ -44,7 +44,8 @@ group "read autors"
     group "read author"
         :read name;
         :read mail;
-        :read pub_key;
+        :read sign_pub_key;
+        :read crypt_pub_key;
         :read sign_count;
         :read signature;
         :construct Author-Obj;
@@ -121,11 +122,10 @@ group "validate"
 
     if (all checks passed) then (no)
         :report warning;
-        stop
     else (yes)
     endif
 
-    -> File;
+    -> Proposal;
 end group
 
 stop

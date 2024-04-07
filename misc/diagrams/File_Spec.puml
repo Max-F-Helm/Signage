@@ -8,7 +8,7 @@ json File_Spec {
 
     "NumberOfAuthors": "u16",
     "ProposalKeys": {
-        "Key-0": "bTODO; <Proposal-Key encrypted with the Author-0s public key>",
+        "Key-0": "b80; <Proposal-Key encrypted with the Author-0s public key>",
         "...": "more keys"
     },
 
@@ -17,35 +17,36 @@ json File_Spec {
             "Author-0": {
                 "Name": "string",
                 "Mail": "string",
-                "PublicKey": "blob-32",
+                "SignPublicKey": "b32",
+                "CryptPublicKey": "b32",
                 "SignCount": "u32; = <number of frames which were signed by this author>",
-                "Signature": "u512; = _sign(_hash(_frame))"
+                "Signature": "b64; = _sign(_hash(_frame))"
             },
             "...": "more Authors"
         },
 
-        "GenesisVal": "u256",
+        "GenesisVal": "b32",
 
         "Addendum": {
             "Type": "u8; = 1",
-            "HashOfPrevFrame": "u256",
+            "HashOfPrevFrame": "b32",
             "Timestamp": "b7; UNIX-Timestamp in ms",
             "AuthorRef": "u16; <index of author>",
             "Title": "string",
             "Mime": "string",
             "DataLength": "u32; <number of bytes of Data>",
             "Data": "blob",
-            "Hash": "u256; = _hash(_frame)"
+            "Hash": "b32; = _hash(_frame)"
         },
         "Vote": {
             "Type": "u8; = 2",
-            "HashOfPrevFrame": "u256",
+            "HashOfPrevFrame": "b32",
             "Timestamp": "b7; UNIX-Timestamp in ms",
             "AuthorRef": "u16; <index of author>",
-            "HashOfTargetAddendum": "u256",
+            "HashOfTargetAddendum": "b32",
             "Vote": "u8; 0 or 1",
-            "Hash": "u256; = _hash(_frame)",
-            "Signature": "u512; = _sign(_hash(_frame))"
+            "Hash": "b32; = _hash(_frame)",
+            "Signature": "b64; = _sign(_hash(_frame))"
         },
         "...": "more Vote / Addendum"
     }

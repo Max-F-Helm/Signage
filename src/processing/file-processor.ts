@@ -10,7 +10,7 @@ import type Author from "./model/Author";
 import type Addendum from "./model/Addendum";
 import type Vote from "./model/Vote";
 import type {Identity} from "@/processing/identity-processor";
-import IdentityProcessor from "@/processing/identity-processor";
+import IdentityProcessor, {identityHasPrivateKeys} from "@/processing/identity-processor";
 import {hashFrame, isArrUnique} from "@/processing/utils";
 
 const FILE_SPEC_VERSION = 2;
@@ -19,7 +19,7 @@ const FRAME_TYPE_ADDENDUM = 1;
 const FRAME_TYPE_VOTE = 2;
 const TIMESTAMP_BYTES = 56 / 8;
 const PROPOSAL_KEY_BYTES = (256 / 8);
-const ENC_PROPOSAL_KEY_BYTES = PROPOSAL_KEY_BYTES + Bill.CRYPT_ASYM_EXTRA_BYTES;
+let ENC_PROPOSAL_KEY_BYTES: number;
 
 interface GenesisDummyFrame extends Frame {}
 
@@ -45,8 +45,9 @@ export class FileProcessor {
     private readonly addedFrames: Frame[] = [];
 
     constructor(identity: Identity, errorCallback: ErrorCallback) {
-        if(identity.keypair.privateKey == null)
-            throw new IllegalArgumentException("Identity for FileProcessor must have a private_key");
+        ENC_PROPOSAL_KEY_BYTES = PROPOSAL_KEY_BYTES + Bill.CRYPT_ASYM_EXTRA_BYTES;// init here as it requires a loaded Bill
+
+        identityHasPrivateKeys(identity, "Identity for FileProcessor must have a private_key");
 
         this.identity = identity;
         this.errorCallback = errorCallback;
@@ -82,6 +83,8 @@ export class FileProcessor {
 
     //region load file
     async loadFile(data: BufferReader) {
+        this.resetState();
+
         this.readAndCheckFileVersion(data);
         const proposalData = await this.decryptProposal(data);
 
@@ -110,6 +113,15 @@ export class FileProcessor {
         this.frames = loadedFrames;
     }
 
+    private resetState() {
+        this.author = null;
+        this.authorCount = 0;
+        this.proposalKey = null;
+        this.authors = undefined;
+        this.frames = undefined;
+        this.genesisValue = undefined;
+    }
+
     private readAndCheckFileVersion(data: BufferReader) {
         const ver = data.readUInt8();
         if(ver != FILE_SPEC_VERSION)
@@ -117,12 +129,12 @@ export class FileProcessor {
     }
 
     private async decryptProposal(data: BufferReader): Promise<BufferReader> {
-        const authorCount = data.readUInt16BE();
-        if(authorCount < 0)
+        this.authorCount = data.readUInt16BE();
+        if(this.authorCount < 0)
             throw new FileContentsException("invalid NumberOfAuthors");
 
         let i = 0;
-        for(; i < authorCount; i++) {
+        for(; i < this.authorCount; i++) {
             const encKey = data.readUint8Array(ENC_PROPOSAL_KEY_BYTES);
             try {
                 this.proposalKey = await Bill.decryptAsym(encKey, this.identity.keypair);
@@ -133,7 +145,7 @@ export class FileProcessor {
         if(this.proposalKey === null)
             throw new FileContentsException("this Identity cannot decrypt this file");
 
-        data.setPosRel((authorCount - i) * ENC_PROPOSAL_KEY_BYTES);// skip over unread keys
+        data.setPosRel((this.authorCount - i) * ENC_PROPOSAL_KEY_BYTES);// skip over unread keys
         const proposalDataEnc = data.readRest();
 
         try {
@@ -152,7 +164,8 @@ export class FileProcessor {
                 const author = await IdentityProcessor.loadAuthor(data);
 
                 if(this.author === null && IdentityProcessor.equals(author, this.identity)) {
-                    author.keypair.privateKey = this.identity.keypair.privateKey;
+                    author.keypair.signPrivateKey = this.identity.keypair.signPrivateKey;
+                    author.keypair.cryptPrivateKey = this.identity.keypair.cryptPrivateKey;
                     this.author = author;
                 }
 
@@ -247,7 +260,7 @@ export class FileProcessor {
             return null;
         }
 
-        const signature = data.readUint8Array(Bill.ECC_SIGNATURE_BYTES);
+        const signature = data.readUint8Array(Bill.SIGNATURE_BYTES);
         const signatureValid = await Bill.verify_data(hash, signature, author.keypair);
 
         if(!signatureValid) {
@@ -368,7 +381,8 @@ export class FileProcessor {
             for(let j = i + 1; j < votes.length; j++) {
                 const v2 = votes[j];
                 if(deepEqual(v1.targetAddendumHash, v2.targetAddendumHash)
-                    && deepEqual(v1.author.keypair.publicKey, v2.author.keypair.publicKey))
+                    && deepEqual(v1.author.keypair.signPublicKey, v2.author.keypair.signPublicKey)
+                    && deepEqual(v1.author.keypair.cryptPublicKey, v2.author.keypair.cryptPublicKey))
                     return false;
             }
         }
@@ -484,7 +498,7 @@ export class FileProcessor {
 
         data.writeUint8Array(frame.prevFrameHash);
         data.writeUIntBE(frame.timestamp, TIMESTAMP_BYTES);
-        data.writeUInt16BE(this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, frame.author.keypair.publicKey)));
+        data.writeUInt16BE(this.findAuthorIdx(frame.author));
         data.writeStringUtf8(frame.title);
         data.writeStringUtf8(frame.type);
         data.writeUInt32BE(frame.data.byteLength);
@@ -495,7 +509,7 @@ export class FileProcessor {
     private async writeVoteFrame(data: BufferWriter, frame: Vote) {
         data.writeUint8Array(frame.prevFrameHash);
         data.writeUIntBE(frame.timestamp, TIMESTAMP_BYTES);
-        data.writeUInt16BE(this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, frame.author.keypair.publicKey)));
+        data.writeUInt16BE(this.findAuthorIdx(frame.author));
         data.writeUint8Array(frame.targetAddendumHash);
         data.writeInt8(frame.vote ? 1 : 0);
         data.writeUint8Array(frame.hash);
@@ -518,7 +532,7 @@ export class FileProcessor {
         }
 
         const timestamp = Date.now();
-        const authorRef = this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, this.author!.keypair.publicKey));
+        const authorRef = this.findAuthorIdx(this.author!);
         const contentLength = content.byteLength;
 
         const hashBuffer = new BufferWriter();
@@ -559,7 +573,7 @@ export class FileProcessor {
 
         const prevFrameHash: Uint8Array = this.frames[this.frames.length - 1].hash;
         const timestamp = Date.now();
-        const authorRef = this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, this.author!.keypair.publicKey));
+        const authorRef = this.findAuthorIdx(this.author!);
 
         let lastAddendumHash: Uint8Array | null = null;
         for(let i = this.frames.length - 1; i >= 0; i--) {
@@ -633,13 +647,14 @@ export class FileProcessor {
             return;
         }
 
-        const authorIdx = this.authors!.findIndex(a => deepEqual(a.keypair.publicKey, loadedAuthor.keypair.publicKey));
+        const authorIdx = this.findAuthorIdx(loadedAuthor);
         if(authorIdx === -1)
-            throw new FileContentsException("author of PatchSet is not an author of this proposal");
+            throw new FileContentsException("author of PatchSet is not an author of this Proposal");
 
         const orgAuthor = this.authors![authorIdx];
         if(orgAuthor === this.author) {
-            loadedAuthor.keypair.privateKey = this.author.keypair.privateKey;
+            loadedAuthor.keypair.signPrivateKey = this.author.keypair.signPrivateKey;
+            loadedAuthor.keypair.cryptPrivateKey = this.author.keypair.cryptPrivateKey;
             this.author = loadedAuthor;
         }
         this.frames!.forEach(f => {
@@ -678,6 +693,12 @@ export class FileProcessor {
 
     clearChanges() {
         this.addedFrames.splice(0);
+    }
+    //endregion
+
+    //region helpers
+    private findAuthorIdx(author: Author): number {
+        return this.authors!.findIndex(a => deepEqual(a.keypair.signPublicKey, author.keypair.signPublicKey));
     }
     //endregion
 }
