@@ -116,27 +116,20 @@ export default class BrowserStorage {
     //endregion
 
     //region proposals
-    async availableProposals(): Promise<Record<string, EntryMeta>> {
-        const ret: Record<string, EntryMeta> = {};
-        const keys = await dbKeys<string>(this.proposalStorage);
-        for(const key of keys) {
-            ret[key] = (await dbGet<EntryMeta>(key, this.proposalMetaStorage))!;
-        }
-        return ret;
+    async availableProposals(): Promise<string[]> {
+        return await dbKeys<string>(this.proposalStorage);
     }
 
-    async loadProposal(name: string, encryptionKey: Uint8Array, dest: FileProcessorWrapper) {
-        let data = await dbGet<Uint8Array>(name, this.proposalStorage);
+    async loadProposal(name: string, dest: FileProcessorWrapper) {
+        const data = await dbGet<Uint8Array>(name, this.proposalStorage);
         if(data === undefined)
             throw new Error(`entry not found (db: data::proposal, key: ${name})`);
 
-        data = await Bill.decrypt(data, encryptionKey);
         await dest.loadFile(new BufferReader(Buffer.from(data)));
-        dest.setKey(encryptionKey);
         dest.storageName.value = name;
     }
 
-    async saveProposal(src: FileProcessorWrapper, storeEncryptionKey: boolean) {
+    async saveProposal(src: FileProcessorWrapper) {
         if(!src.isFileLoaded())
             throw new IllegalArgumentException("no file is loaded");
 
@@ -144,15 +137,10 @@ export default class BrowserStorage {
         if(name === null)
             throw new IllegalArgumentException("no name is set");
 
-        const encryptionKey = src.getKey();
-        if(encryptionKey === null)
-            throw new IllegalArgumentException("no key is set");
-
-        let data: Uint8Array = await src.saveFile();
-        data = await Bill.encrypt(data, encryptionKey);
+        const data: Uint8Array = await src.saveFile();
 
         const meta: EntryMeta = {
-            encryptionKey: storeEncryptionKey ? encryptionKey : null
+            encryptionKey: null
         };
 
         await dbSet(name, data, this.proposalStorage);

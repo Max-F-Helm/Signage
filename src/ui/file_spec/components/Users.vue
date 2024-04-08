@@ -39,7 +39,7 @@
   });
 
   function formatPublicKey(author: Author): string {
-    const bytes = Buffer.from(author.keypair.publicKey);
+    const bytes = Buffer.from(author.keypair.signPublicKey);
     return bytes.toString("hex").toUpperCase();
   }
 </script>

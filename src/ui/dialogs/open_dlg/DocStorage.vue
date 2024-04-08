@@ -8,15 +8,8 @@
     <div class="flex flex-column row-gap-3">
       <DataTable :value="entries"
                  selectionMode="single" v-model:selection="selectedEntry" :rowHover="true"
-                 :scrollable="true" scrollHeight="16rem"
-                 @row-select="onSelect">
+                 :scrollable="true" scrollHeight="16rem">
         <Column field="name" header="Name" :sortable="true"></Column>
-        <Column field="encrypted" header="Encrypted" class="colCryptStat">
-          <template #body="slotProps">
-            <div v-if="slotProps.data.encryptionKey === null" class="pi pi-lock"></div>
-            <div v-else class="pi pi-lock-open"></div>
-          </template>
-        </Column>
         <Column class="colDel">
           <template #body="slotProps">
             <PButton icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
@@ -24,14 +17,6 @@
           </template>
         </Column>
       </DataTable>
-
-      <div class="p-inputgroup">
-        <span class="p-inputgroup-addon">
-          <i class="pi pi-lock"></i>
-        </span>
-        <Password v-model="passwd" :feedback="false" placeholder="Password" ref="refPasswdInp" :disabled="!passwordRequired"
-                  @keyup.enter="onPasswdImpEnter"/>
-      </div>
 
       <div>
         <PButton @click="onLoad" :disabled="selectedEntry === null">Load</PButton>
@@ -42,25 +27,22 @@
         {{ errorMsg }}
       </div>
       <div v-show="success" class="p-inline-message p-inline-message-success">
-        Identity loaded
+        Document loaded
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-  import {computed, ref, watch, onBeforeMount} from "vue";
+  import {ref, watch, onBeforeMount} from "vue";
   import DataTable from "primevue/datatable";
   import Column from "primevue/column";
   import PButton from "primevue/button";
-  import Password from "primevue/password";
   import BrowserStorage from "@/BrowserStorage";
-  import Bill from "@/processing/bill";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
 
   interface Entry {
-    name: string,
-    encryptionKey: Uint8Array | null
+    name: string
   }
 
   const emit = defineEmits(["update:ready"]);
@@ -68,27 +50,11 @@
   const errorMsg = ref("");
   const entries = ref<Entry[]>([]);
   const selectedEntry = ref<Entry | null>(null);
-  const passwd = ref("");
-  const refPasswdInp = ref();
 
   const success = ref(false);
   watch(success, () => {
     emit("update:ready", success.value);
   });
-
-  const passwordRequired = computed(() => {
-    return selectedEntry.value !== null && selectedEntry.value.encryptionKey === null;
-  });
-
-  function onSelect() {
-    if(passwordRequired.value)
-      refPasswdInp.value?.$refs.input.$el.focus();
-  }
-
-  async function onPasswdImpEnter() {
-    if(selectedEntry.value !== null)
-      await onLoad();
-  }
 
   async function onDel(name: string) {
     await BrowserStorage.INSTANCE.removeProposal(name);
@@ -100,31 +66,21 @@
     errorMsg.value = "";
 
     try {
-      let cipherKey: Uint8Array;
-      if(passwordRequired.value) {
-        cipherKey = await Bill.digest_pwd(passwd.value);
-      } else {
-        cipherKey = selectedEntry.value!.encryptionKey!;
-      }
-
-      await BrowserStorage.INSTANCE.loadProposal(selectedEntry.value!.name, cipherKey, FileProcessorWrapper.INSTANCE);
+      await BrowserStorage.INSTANCE.loadProposal(selectedEntry.value!.name, FileProcessorWrapper.INSTANCE);
 
       success.value = true;
     } catch (e) {
       console.error("unable to load proposal from storage", e);
-      if(passwordRequired.value)
-        errorMsg.value = "there was an error while loading the proposal (was the password correct?)";
-      else
-        errorMsg.value = "there was an error while loading the proposal";
+      errorMsg.value = "there was an error while loading the proposal";
     }
   }
 
   async function reloadEntries() {
-    entries.value = Object.entries(await BrowserStorage.INSTANCE.availableProposals()).map(([k, v]) => {
-      return {
-        name: k,
-        encryptionKey: v.encryptionKey
-      }
+    const storedProposals = await BrowserStorage.INSTANCE.availableProposals();
+    entries.value = storedProposals.map((name) => {
+      return <Entry>{
+        name: name
+      };
     });
   }
 

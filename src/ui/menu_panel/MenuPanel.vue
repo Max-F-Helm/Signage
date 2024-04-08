@@ -216,9 +216,7 @@
 
   async function importPatchset(file: File) {
     try {
-      let data: Uint8Array = await loadFile(file);
-      data = await Bill.decrypt(data, FileProcessorWrapper.INSTANCE.getKey()!);
-
+      const data: Uint8Array = await loadFile(file);
       await FileProcessorWrapper.INSTANCE.importPatchSet(new BufferReader(Buffer.from(data)));
 
       toast.add({

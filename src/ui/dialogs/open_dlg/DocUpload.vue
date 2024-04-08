@@ -1,24 +1,16 @@
 <template>
   <div class="flex flex-column row-gap-3">
     <div>
-      <FileUploadLight @remove="delFile" @select="addFile"></FileUploadLight>
-    </div>
-    <div class="p-inputgroup">
-      <span class="p-inputgroup-addon">
-        <i class="pi pi-lock"></i>
-      </span>
-      <Password v-model="passwd" :feedback="false" placeholder="Password" ref="refPasswdInp"
-                @keyup.enter="onPasswdInpEnter"/>
+      <FileUploadLight
+        @remove="delFile"
+        @select="addFile"
+      />
     </div>
 
     <div class="flex">
       <div class="p-inputgroup-addon">
         <Checkbox v-model="saveToStorage" :binary="true" input-id="docUpl_storage"/>
         <label for="docUpl_storage" class="ml-1">Save in Browser-Storage</label>
-      </div>
-      <div class="p-inputgroup-addon">
-        <Checkbox v-model="saveToStorageEnc" :binary="true" :disabled="!saveToStorage" input-id="docUpl_storage_enc"/>
-        <label for="docUpl_storage_enc" class="ml-1">Save encrypted</label>
       </div>
       <div class="p-inputgroup-addon p-0 w-6">
         <span class="p-input-icon-left w-full">
@@ -48,8 +40,6 @@
   import InputText from "primevue/inputtext";
   import Checkbox from "primevue/checkbox";
   import type {FileUploadSelectEvent} from "primevue/fileupload";
-  import Password from "primevue/password";
-  import Bill from "@/processing/bill";
   import {Buffer} from "buffer";
   import BufferReader from "@/processing/buffer-reader";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
@@ -60,12 +50,9 @@
   const emit = defineEmits(["update:ready"]);
 
   const file = ref<File | null>(null);
-  const passwd = ref("");
   const errorMsg = ref("");
   const saveToStorage = ref(true);
-  const saveToStorageEnc = ref(true);
   const saveToStorageName = ref("");
-  const refPasswdInp = ref();
 
   const success = ref(false);
   watch(success, () => {
@@ -73,7 +60,7 @@
   });
 
   const loadDisabled = computed(() => {
-    return file.value === null || passwd.value.length === 0;
+    return file.value === null;
   });
 
   function addFile(e: FileUploadSelectEvent) {
@@ -84,59 +71,45 @@
     if(dotIdx !== -1)
       fileName = fileName.substring(0, dotIdx);
     saveToStorageName.value = fileName;
-
-    refPasswdInp.value?.$refs.input.$el.focus();
   }
 
   function delFile() {
     file.value = null;
   }
 
-  async function onPasswdInpEnter() {
-    if(!loadDisabled.value)
-      await load();
-  }
-
   async function load() {
     success.value = false;
     errorMsg.value = "";
 
+    let data: Buffer;
     try {
-      const data = await loadFile(file.value!);
-
-      try {
-        const key = await Bill.digest_pwd(passwd.value);
-        const dataDec = Buffer.from(await Bill.decrypt(data, key));
-
-        try {
-          await FileProcessorWrapper.INSTANCE.loadFile(new BufferReader(dataDec));
-          FileProcessorWrapper.INSTANCE.setKey(key);
-
-          if(saveToStorage.value) {
-            FileProcessorWrapper.INSTANCE.storageName.value = saveToStorageName.value;
-
-            try {
-              await BrowserStorage.INSTANCE.saveProposal(FileProcessorWrapper.INSTANCE, !saveToStorageEnc.value);
-            } catch (e) {
-              console.error("unable to store proposal:", e);
-              errorMsg.value = "there was an error while storing the proposal";
-            }
-          } else {
-            FileProcessorWrapper.INSTANCE.storageName.value = null;
-          }
-
-          success.value = true;
-        } catch (e) {
-          console.error("unable to load proposal from file: load failed", e);
-          errorMsg.value = "there was an error while loading the proposal (the file seems corrupted)";
-        }
-      } catch (e) {
-        console.error("unable to load proposal from file: decryption failed", e);
-        errorMsg.value = "there was an error while loading the proposal (was the password correct?)";
-      }
+      data = await loadFile(file.value!);
     } catch (e) {
       console.error("unable to load proposal from file: open failed", e);
       errorMsg.value = "there was an error while loading the proposal (unable to open the file)";
+      return;
+    }
+
+    try {
+      await FileProcessorWrapper.INSTANCE.loadFile(new BufferReader(data));
+
+      if(saveToStorage.value) {
+        FileProcessorWrapper.INSTANCE.storageName.value = saveToStorageName.value;
+
+        try {
+          await BrowserStorage.INSTANCE.saveProposal(FileProcessorWrapper.INSTANCE);
+        } catch (e) {
+          console.error("unable to store proposal:", e);
+          errorMsg.value = "there was an error while storing the proposal";
+        }
+      } else {
+        FileProcessorWrapper.INSTANCE.storageName.value = null;
+      }
+
+      success.value = true;
+    } catch (e) {
+      console.error("unable to load proposal from file: load failed", e);
+      errorMsg.value = "there was an error while loading the proposal (you are not an author or the file is corrupted)";
     }
   }
 </script>

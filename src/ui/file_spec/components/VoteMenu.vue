@@ -48,18 +48,18 @@ const rejectBtnOptions: MenuItem[] = [
 const disabled = ref<boolean>(true);
 const showAddDlg = ref<boolean>(false);
 
-function onVoteAccept() {
+async function onVoteAccept() {
   try {
-    fileProcessor.addVote(true);
+    await fileProcessor.addVote(true);
     emit("proposalModified");
   } catch (e: any) {
     showErrToast("Error while performing vote", e);
   }
 }
 
-function onVoteReject() {
+async function onVoteReject() {
   try {
-    fileProcessor.addVote(false);
+    await fileProcessor.addVote(false);
     emit("proposalModified");
   } catch (e: any) {
     showErrToast("Error while performing vote", e);
@@ -70,21 +70,24 @@ function onVoteRejectAndAddAddendum() {
   showAddDlg.value = true;
 }
 
-function onAddDlgLoaded(data: NewAddendumData) {
+async function onAddDlgLoaded(data: NewAddendumData) {
   try {
-    fileProcessor.addVote(false);
-
-    try {
-      fileProcessor.addAddendum(data.title, data.mime, data.content);
-      emit("proposalModified");
-    } catch (e) {
-      console.error("Error while adding addendum", e);
-      showErrToast("Error while adding addendum", e);
-    }
+    await fileProcessor.addVote(false);
   } catch (e) {
     console.error("Error while performing vote", e);
     showErrToast("Error while performing vote", e);
+    return;
   }
+
+  try {
+    await fileProcessor.addAddendum(data.title, data.mime, data.content);
+  } catch (e) {
+    console.error("Error while adding addendum", e);
+    showErrToast("Error while adding addendum", e);
+    return;
+  }
+
+  emit("proposalModified");
 }
 
 function onAddDlgError(e: any) {

@@ -50,13 +50,6 @@
         </TabPanel>
       </TabView>
     </div>
-    <div class="p-inputgroup">
-      <span class="p-inputgroup-addon">
-        <i class="pi pi-lock"></i>
-      </span>
-      <Password v-model="passwd" :feedback="false" placeholder="Password" ref="refPasswdInp"
-                @keyup.enter="onPasswdInpEnter"/>
-    </div>
 
     <div v-show="errorMsg.length !== 0" class=" p-inline-message p-inline-message-error">
       {{ errorMsg }}
@@ -75,14 +68,12 @@
 <script lang="ts" setup>
   import {computed, onBeforeMount, ref, watch} from "vue";
   import PButton from "primevue/button";
-  import Password from "primevue/password";
   import TabView from "primevue/tabview";
   import TabPanel from "primevue/tabpanel";
   import DataTable from "primevue/datatable";
   import Column from "primevue/column";
   import FileUpload from "primevue/fileupload";
   import IdentityProcessor from "@/processing/identity-processor";
-  import Bill from "@/processing/bill";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
   import type {FileUploadRemoveEvent, FileUploadSelectEvent} from "primevue/fileupload";
   import type Author from "@/processing/model/Author";
@@ -102,9 +93,7 @@
   const emit = defineEmits(["update:ready"]);
 
   const authors = ref<File[]>([]);
-  const passwd = ref("");
   const errorMsg = ref("");
-  const refPasswdInp = ref();
   const storedAuthors = ref<Entry[]>([]);
   const selectedStoredAuthors = ref<Entry[]>([]);
   const openTab = ref(0);
@@ -116,7 +105,6 @@
 
   function addAuthorFile(e: FileUploadSelectEvent) {
     authors.value = e.files;
-    refPasswdInp.value?.$refs.input.$el.focus();
   }
 
   function delAuthorFile(e: FileUploadRemoveEvent) {
@@ -124,19 +112,13 @@
   }
 
   const valid = computed(() => {
-    return authors.value.length !== 0
-        && passwd.value.length !== 0;
+    return authors.value.length !== 0;
   });
 
   const ready = ref(false);
   watch(ready, () => {
     emit("update:ready", ready.value);
   });
-
-  async function onPasswdInpEnter() {
-    if(valid.value)
-      await onCreate();
-  }
 
   async function onCreate() {
     ready.value = false;
@@ -192,8 +174,6 @@
 
       try {
         await FileProcessorWrapper.INSTANCE.createFile(loadedAuthors);
-        FileProcessorWrapper.INSTANCE.setKey(await Bill.digest_pwd(passwd.value));
-
         ready.value = true;
       } catch (e) {
         console.error("unable to create proposal: createFile failed", e);

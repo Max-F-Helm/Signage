@@ -16,7 +16,6 @@ export default class FileProcessorWrapper {
 
     private fileProcessor: FileProcessor | null = null;
     private identity: Identity | null = null;
-    private key: Uint8Array | null = null;
     private readonly listeners: Listener[] = [];
     private readonly errListeners: ErrorCallback[] = [];
 
@@ -52,14 +51,6 @@ export default class FileProcessorWrapper {
 
     getIdentity(): Identity | null {
         return this.identity;
-    }
-
-    setKey(key: Uint8Array) {
-        this.key = key;
-    }
-
-    getKey(): Uint8Array | null {
-        return this.key;
     }
 
     init() {

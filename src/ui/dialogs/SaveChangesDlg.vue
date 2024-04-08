@@ -23,7 +23,6 @@
   import PButton from "primevue/button";
   import Dialog from "primevue/dialog";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
-  import Bill from "@/processing/bill";
   import {download} from "@/ui/utils/utils";
   import {useToast} from "primevue/usetoast";
   import BrowserStorage from "@/BrowserStorage";
@@ -66,8 +65,7 @@
   async function onSaveProposal() {
     try {
       const data = await fileProcessor.saveFile();
-      const dataEnc = await Bill.encrypt(data, fileProcessor.getKey()!);
-      download(dataEnc, "proposal.sDoc");
+      download(data, "proposal.sDoc");
     } catch (e) {
       console.error("unable to save proposal: saveFile failed", e);
       showErrToast("Error while saving file", e);
@@ -78,7 +76,8 @@
     try {
       const name = fileProcessor.storageName.value!;
       const storedProposals = await BrowserStorage.INSTANCE.availableProposals();
-      if(!storedProposals.hasOwnProperty(name)) {
+
+      if(!storedProposals.includes(name)) {
         // seems like it was deleted in the meantime
         fileProcessor.storageName.value = null;
 
@@ -87,9 +86,8 @@
 
         return;
       }
-      const encrypted = storedProposals[name].encryptionKey !== null;
 
-      await BrowserStorage.INSTANCE.saveProposal(fileProcessor, encrypted);
+      await BrowserStorage.INSTANCE.saveProposal(fileProcessor);
 
       toast.add({
         severity: "success",
@@ -105,8 +103,8 @@
   async function onSavePatches() {
     try {
       const data = await fileProcessor.exportChanges();
-      const dataEnc = await Bill.encrypt(data, fileProcessor.getKey()!);
-      download(dataEnc, "changes.sPatch");
+      download(data, "changes.sPatch");
+
       patchExported.value = true;
     } catch (e) {
       console.error("unable to save proposal: saveFile failed", e);

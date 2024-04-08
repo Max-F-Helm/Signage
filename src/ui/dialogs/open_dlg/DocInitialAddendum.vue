@@ -52,8 +52,8 @@
   import FileUploadLight from "@/ui/utils/FileUploadLight.vue";
   import type {FileUploadSelectEvent} from "primevue/fileupload";
   import {download, loadFile, sniffMime} from "@/ui/utils/utils";
+  import {Buffer} from "buffer";
   import FileProcessorWrapper from "@/FileProcessorWrapper";
-  import Bill from "@/processing/bill";
   import BrowserStorage from "@/BrowserStorage";
 
   const emit = defineEmits(["update:ready"]);
@@ -61,7 +61,6 @@
   const file = ref<File | null>(null);
   const title = ref("");
   const saveToStorage = ref(true);
-  const saveToStorageEnc = ref(true);
   const saveToStorageName = ref("");
   const errorMsg = ref("");
 
@@ -87,44 +86,47 @@
     ready.value = false;
     errorMsg.value = "";
 
+    let data: Buffer;
+    let mime: string;
     try {
-      const data = await loadFile(file.value!);
-      const mime = sniffMime(file.value!!, data);
-
-      try {
-        await FileProcessorWrapper.INSTANCE.addAddendum(title.value, mime, data);
-
-        try {
-          const key = FileProcessorWrapper.INSTANCE.getKey()!;
-          const data = await FileProcessorWrapper.INSTANCE.saveFile();
-          const dataEnc = await Bill.encrypt(data, key);
-          download(dataEnc, "proposal.sDoc");
-
-          if(saveToStorage.value) {
-            FileProcessorWrapper.INSTANCE.storageName.value = saveToStorageName.value;
-
-            try {
-              await BrowserStorage.INSTANCE.saveProposal(FileProcessorWrapper.INSTANCE, !saveToStorageEnc.value);
-            } catch (e) {
-              console.error("unable to store proposal:", e);
-              errorMsg.value = "there was an error while storing the proposal";
-            }
-          } else {
-            FileProcessorWrapper.INSTANCE.storageName.value = null;
-          }
-
-          ready.value = true;
-        } catch (e) {
-          console.error("unable to save proposal: saveFile failed", e);
-          errorMsg.value = "there was an error while adding the addendum (unable to save the proposal)";
-        }
-      } catch (e) {
-        console.error("unable to add addendum: add failed", e);
-        errorMsg.value = "there was an error while adding the addendum (unable to add the file)";
-      }
+      data = await loadFile(file.value!);
+      mime = sniffMime(file.value!!, data);
     } catch (e) {
       console.error("unable to add addendum: open failed", e);
       errorMsg.value = "there was an error while adding the addendum (unable to open the file)";
+      return;
+    }
+
+    try {
+      await FileProcessorWrapper.INSTANCE.addAddendum(title.value, mime, data);
+    } catch (e) {
+      console.error("unable to add addendum: add failed", e);
+      errorMsg.value = "there was an error while adding the addendum (unable to add the file)";
+      return;
+    }
+
+    try {
+      const data = await FileProcessorWrapper.INSTANCE.saveFile();
+      download(data, "proposal.sDoc");
+
+      if(saveToStorage.value) {
+        FileProcessorWrapper.INSTANCE.storageName.value = saveToStorageName.value;
+
+        try {
+          await BrowserStorage.INSTANCE.saveProposal(FileProcessorWrapper.INSTANCE);
+        } catch (e) {
+          console.error("unable to store proposal:", e);
+          errorMsg.value = "there was an error while storing the proposal";
+        }
+      } else {
+        FileProcessorWrapper.INSTANCE.storageName.value = null;
+      }
+
+      ready.value = true;
+    } catch (e) {
+      console.error("unable to save proposal: saveFile failed", e);
+      errorMsg.value = "there was an error while adding the addendum (unable to save the proposal)";
+      return;
     }
   }
 </script>
