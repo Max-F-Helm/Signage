@@ -123,7 +123,7 @@ export default class BufferWriter {
 
     writeStringUtf8(value: string) {
         this.ensureCapacity(value.length + 1);
-        let written = this.buffer.write(value, this.pos, value.length, "utf8");
+        const written = this.buffer.write(value, this.pos, value.length, "utf8");
         this.pos += written;
         this.writeUInt8(0);// write 0-terminator
         return written + 1;

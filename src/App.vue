@@ -1,6 +1,6 @@
 <template>
   <div class="p-1">
-    <Toast></Toast>
+    <Toast />
     <RouterView />
   </div>
 </template>

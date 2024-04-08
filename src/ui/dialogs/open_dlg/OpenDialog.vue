@@ -1,48 +1,53 @@
 <template>
-  <Dialog v-model:visible="open" :closable="true" :modal="true" contentClass="big-dlg"
-          header="Open or Create a Document">
+  <Dialog
+    v-model:visible="open"
+    :closable="true"
+    :modal="true"
+    content-class="big-dlg"
+    header="Open or Create a Document"
+  >
     <Steps v-model:value="currentStep" :readonly="true" :steps="steps">
       <template #od-id_choice>
-        <IdChoice @update:choice="onIdUpdateChoice"></IdChoice>
+        <IdChoice @update:choice="onIdUpdateChoice" />
       </template>
 
       <template #od-id_sto>
-        <IdStorage @update:ready="v => onUpdateStepReady('od-id_sto', v)"></IdStorage>
+        <IdStorage @update:ready="v => onUpdateStepReady('od-id_sto', v)" />
       </template>
 
       <template #od-id_upl>
-        <IdUpload @update:ready="v => onUpdateStepReady('od-id_upl', v)"></IdUpload>
+        <IdUpload @update:ready="v => onUpdateStepReady('od-id_upl', v)" />
       </template>
 
       <template #od-id_new>
-        <IdNew @update:ready="v => onUpdateStepReady('od-id_new', v)"></IdNew>
+        <IdNew @update:ready="v => onUpdateStepReady('od-id_new', v)" />
       </template>
 
       <template #od-doc_choice>
-        <DocChoice @update:choice="onDocUpdateChoice"></DocChoice>
+        <DocChoice @update:choice="onDocUpdateChoice" />
       </template>
 
       <template #od-doc_sto>
-        <DocStorage @update:ready="v => onUpdateStepReady('od-doc_sto', v)"></DocStorage>
+        <DocStorage @update:ready="v => onUpdateStepReady('od-doc_sto', v)" />
       </template>
 
       <template #od-doc_upl>
-        <DocUpload @update:ready="v => onUpdateStepReady('od-doc_upl', v)"></DocUpload>
+        <DocUpload @update:ready="v => onUpdateStepReady('od-doc_upl', v)" />
       </template>
 
       <template #od-doc_new>
-        <DocNew @update:ready="v => onUpdateStepReady('od-doc_new', v)"></DocNew>
+        <DocNew @update:ready="v => onUpdateStepReady('od-doc_new', v)" />
       </template>
 
       <template #od-doc_new_addendum>
-        <DocInitialAddendum @update:ready="v => onUpdateStepReady('od-doc_new_addendum', v)"></DocInitialAddendum>
+        <DocInitialAddendum @update:ready="v => onUpdateStepReady('od-doc_new_addendum', v)" />
       </template>
     </Steps>
 
     <template #footer>
       <div class="flex flex-row">
         <PButton :disabled="backDisabled" @click="onBack">Back</PButton>
-        <div class="flex-grow-1"></div>
+        <div class="flex-grow-1" />
         <PButton :disabled="nextDisabled" @click="onNext">Next</PButton>
       </div>
     </template>

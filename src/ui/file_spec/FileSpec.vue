@@ -1,8 +1,8 @@
 <template>
   <div>
-    <Users :authors="authors"></Users>
-    <Contents :frames="frames"></Contents>
-    <VoteMenu @proposalModified="onModified"></VoteMenu>
+    <Users :authors="authors" />
+    <Contents :frames="frames" />
+    <VoteMenu @proposal-modified="onModified" />
   </div>
 </template>
 

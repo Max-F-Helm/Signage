@@ -2,30 +2,30 @@
   <div class="flex flex-column row-gap-3">
     <div class="p-inputgroup">
       <span class="p-inputgroup-addon">
-        <i class="pi pi-user"></i>
+        <i class="pi pi-user" />
       </span>
-      <InputText v-model="name" placeholder="Name" type="text"></InputText>
+      <InputText v-model="name" placeholder="Name" type="text"/>
     </div>
     <div class="p-inputgroup">
       <span class="p-inputgroup-addon">
-        <i class="pi pi-at"></i>
+        <i class="pi pi-at" />
       </span>
-      <InputText v-model="mail" placeholder="E-Mail" type="email"></InputText>
+      <InputText v-model="mail" placeholder="E-Mail" type="email"/>
     </div>
     <div class="p-inputgroup">
       <span class="p-inputgroup-addon">
-        <i class="pi pi-lock"></i>
+        <i class="pi pi-lock" />
       </span>
       <Password v-model="passwd" :feedback="false" placeholder="Password"/>
     </div>
 
     <div class="flex">
       <div class="p-inputgroup-addon">
-        <Checkbox v-model="saveToStorage" :binary="true" inputId="idNew_storage"/>
+        <Checkbox v-model="saveToStorage" :binary="true" input-id="idNew_storage"/>
         <label for="idNew_storage" class="ml-1">Save in Browser-Storage</label>
       </div>
       <div class="p-inputgroup-addon">
-        <Checkbox v-model="saveToStorageEnc" :binary="true" :disabled="!saveToStorage" inputId="idNew_storage_enc"/>
+        <Checkbox v-model="saveToStorageEnc" :binary="true" :disabled="!saveToStorage" input-id="idNew_storage_enc"/>
         <label for="idNew_storage_enc" class="ml-1">Save encrypted</label>
       </div>
     </div>
@@ -39,7 +39,7 @@
 
     <div>
       <PButton :disabled="!valid" @click="onCreate">Create</PButton>
-      <div class="flex-grow-1"></div>
+      <div class="flex-grow-1" />
     </div>
   </div>
 </template>

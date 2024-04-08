@@ -1,4 +1,3 @@
-// @ts-ignore
 import dateFormat from "dateformat";
 import {Buffer} from "buffer";
 import filetype from "magic-bytes.js";
@@ -26,7 +25,7 @@ export function download(data: Uint8Array, filename: string) {
     const blob = new Blob([data], {type: 'application/octet-stream'});
     const url = URL.createObjectURL(blob);
 
-    let anchor = document.createElement('a');
+    const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = filename;
     document.body.appendChild(anchor);

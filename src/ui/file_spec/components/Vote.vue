@@ -9,13 +9,16 @@
           <div class="col-2 p-inputgroup-addon">
             Time Stamp
           </div>
-          <div class="col p-inputgroup-addon justify-content-start">{{ formattedTimestamp }}</div>
+          <div class="col p-inputgroup-addon justify-content-start">
+            {{ formattedTimestamp }}
+          </div>
         </div>
         <div class="grid p-inputgroup mx-0 mt-1">
           <div class="col-2 p-inputgroup-addon">
             Author
           </div>
-          <div class="col p-inputgroup-addon justify-content-start">{{ props.val.author.name }}
+          <div class="col p-inputgroup-addon justify-content-start">
+            {{ props.val.author.name }}
             ({{ props.val.author.mail }})
           </div>
         </div>
@@ -23,7 +26,9 @@
           <div class="col-2 p-inputgroup-addon">
             Vote
           </div>
-          <div class="col p-inputgroup-addon justify-content-start">{{ props.val.vote ? "accepted" : "rejected" }}</div>
+          <div class="col p-inputgroup-addon justify-content-start">
+            {{ props.val.vote ? "accepted" : "rejected" }}
+          </div>
         </div>
       </template>
     </Card>

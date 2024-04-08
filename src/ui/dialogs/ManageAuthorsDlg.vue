@@ -1,19 +1,28 @@
 <template>
-  <Dialog v-model:visible="show" :closable="true" :modal="true" header="Manage stored authors">
+  <Dialog
+    v-model:visible="show"
+    :closable="true"
+    :modal="true"
+    header="Manage stored authors"
+  >
     <div>
       <div class="mb-2 ml-2">
         <PButton icon="pi pi-replay" class="p-button-rounded p-button-outlined p-button-secondary"
-                 @click="reloadEntries"></PButton>
-        <div class="flex-grow-1"></div>
+                 @click="reloadEntries" />
+        <div class="flex-grow-1" />
       </div>
-      <DataTable :value="authors"
-                 selectionMode="single" :rowHover="true"
-                 :scrollable="true" scrollHeight="16rem">
-        <Column field="name" header="Name + Mail" :sortable="true"></Column>
+      <DataTable
+        :value="authors"
+        selection-mode="single"
+        :row-hover="true"
+        :scrollable="true"
+        scroll-height="16rem"
+      >
+        <Column field="name" header="Name + Mail" :sortable="true" />
         <Column class="colDel">
           <template #body="slotProps">
             <PButton icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
-                     @click="() => onDel(slotProps.data.name)"></PButton>
+                     @click="() => onDel(slotProps.data.name)" />
           </template>
         </Column>
       </DataTable>
@@ -21,18 +30,25 @@
 
     <div class="mt-5">
       Upload new Authors to store them in the browser-storage
-      <FileUpload :fileLimit="32767" :multiple="true" :showCancelButton="false"
-                  :showUploadButton="false" mode="advanced"
-                  @remove="delAuthorFile" @select="addAuthorFile">
+      <FileUpload
+        :file-limit="32767"
+        :multiple="true"
+        :show-cancel-button="false"
+        :show-upload-button="false"
+        mode="advanced"
+        @remove="delAuthorFile"
+        @select="addAuthorFile"
+      >
         <template #content="{ files, uploadedFiles, removeFileCallback }">
           <div v-if="files.length > 0">
             <div class="flex flex-wrap p-1">
               <div v-for="(file, index) of files" :key="file.name + file.type + file.size"
                    class="card flex flex-row mb-1 p-2 border-1 surface-border align-items-center w-full">
                 <span class="font-semibold">{{ file.name }}</span>
-                <div class="flex-grow-1"></div>
-                <PButton icon="pi pi-times" @click="removeFileCallback(index)"
-                         class="p-button-outlined p-button-danger p-button-rounded"></PButton>
+                <div class="flex-grow-1" />
+                <PButton icon="pi pi-times"
+                         class="p-button-outlined p-button-danger p-button-rounded"
+                         @click="removeFileCallback(index)" />
               </div>
             </div>
           </div>
@@ -40,7 +56,7 @@
       </FileUpload>
       <div class="mb-2 mt-2">
         <PButton @click="onUpload">Upload</PButton>
-        <div class="flex-grow-1"></div>
+        <div class="flex-grow-1" />
       </div>
     </div>
   </Dialog>

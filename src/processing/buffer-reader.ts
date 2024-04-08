@@ -45,42 +45,42 @@ export default class BufferReader {
         return ret;
     }
     readUInt8(): number {
-        let ret = this.buffer.readUInt8(this.pos);
+        const ret = this.buffer.readUInt8(this.pos);
         this.pos += 1;
         return ret;
     }
     readUInt16BE(): number {
-        let ret = this.buffer.readUInt16BE(this.pos);
+        const ret = this.buffer.readUInt16BE(this.pos);
         this.pos += 2;
         return ret;
     }
     readUInt32BE(): number {
-        let ret = this.buffer.readUInt32BE(this.pos);
+        const ret = this.buffer.readUInt32BE(this.pos);
         this.pos += 4;
         return ret;
     }
     readInt8(): number {
-        let ret = this.buffer.readInt8(this.pos);
+        const ret = this.buffer.readInt8(this.pos);
         this.pos += 1;
         return ret;
     }
     readInt16BE(): number {
-        let ret = this.buffer.readInt16BE(this.pos);
+        const ret = this.buffer.readInt16BE(this.pos);
         this.pos += 2;
         return ret;
     }
     readInt32BE(): number {
-        let ret = this.buffer.readInt32BE(this.pos);
+        const ret = this.buffer.readInt32BE(this.pos);
         this.pos += 4;
         return ret;
     }
     readFloatBE(): number {
-        let ret = this.buffer.readFloatBE(this.pos);
+        const ret = this.buffer.readFloatBE(this.pos);
         this.pos += 4;
         return ret;
     }
     readDoubleBE(): number {
-        let ret = this.buffer.readDoubleBE(this.pos);
+        const ret = this.buffer.readDoubleBE(this.pos);
         this.pos += 8;
         return ret;
     }
@@ -104,7 +104,7 @@ export default class BufferReader {
      * @param keepPos if false the pos will be moved to the end else it will not be modified
      */
     readToUnit8Array(keepPos: boolean = false): Uint8Array {
-        let ret = new Uint8Array(this.buffer.buffer, this.pos, this.buffer.length - this.pos);
+        const ret = new Uint8Array(this.buffer.buffer, this.pos, this.buffer.length - this.pos);
         if(!keepPos)
             this.pos = this.buffer.length;
         return ret;
@@ -115,7 +115,7 @@ export default class BufferReader {
      * @param length number of bytes to read
      */
     readUint8Array(length: number): Uint8Array {
-        let ret = new Uint8Array(this.buffer.buffer, this.pos, length);
+        const ret = new Uint8Array(this.buffer.buffer, this.pos, length);
         this.pos += length;
         return ret;
     }

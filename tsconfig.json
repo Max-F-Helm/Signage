@@ -1,25 +1,14 @@
 {
-  "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": [
-    "env.d.ts",
-    "src/**/*",
-    "src/**/*.vue"
-  ],
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "target": "ES2022",
-    "lib": [
-      "ES2022",
-      "dom"
-    ]
-  },
-
+  "files": [],
   "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
     {
       "path": "./tsconfig.config.json"
     }
-  ]
+  ],
+  "compilerOptions": {
+    "module": "NodeNext"
+  }
 }

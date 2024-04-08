@@ -12,17 +12,20 @@
 
     <div class="flex">
       <div class="p-inputgroup-addon">
-        <Checkbox v-model="saveToStorage" :binary="true" inputId="docUpl_storage"/>
-        <label for="docUpl_storage" class="ml-1">Save in Browser-Storage</label>
-      </div>
-      <div class="p-inputgroup-addon">
-        <Checkbox v-model="saveToStorageEnc" :binary="true" :disabled="!saveToStorage" inputId="docUpl_storage_enc"/>
-        <label for="docUpl_storage_enc" class="ml-1">Save encrypted</label>
+        <Checkbox v-model="saveToStorage" :binary="true" input-id="docUpl_storage"/>
+        <label for="docUpl_storage" class="ml-1">
+          Save in Browser-Storage
+        </label>
       </div>
       <div class="p-inputgroup-addon p-0 w-6">
         <span class="p-input-icon-left w-full">
-          <i class="pi pi-file"></i>
-          <InputText v-model="saveToStorageName" placeholder="Name" :disabled="!saveToStorage" class="border-0 w-full"/>
+          <i class="pi pi-file" />
+          <InputText
+            v-model="saveToStorageName"
+            placeholder="Name"
+            :disabled="!saveToStorage"
+            class="border-0 w-full"
+          />
         </span>
       </div>
     </div>
@@ -36,7 +39,7 @@
 
     <div>
       <PButton :disabled="!valid" @click="onAdd">Upload</PButton>
-      <div class="flex-grow-1"></div>
+      <div class="flex-grow-1" />
     </div>
   </div>
 </template>

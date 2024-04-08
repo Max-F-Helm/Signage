@@ -4,10 +4,20 @@
     <PanelMenu :model="menuItems.val"></PanelMenu>
   </Sidebar>
 
-  <InfoPopup v-model="showInfo"></InfoPopup>
+  <InfoPopup v-model="showInfo" />
 
-  <InputTextDlg v-model="showInpPasswdDlg" mode="password" header="Enter password for save" @result="onPasswordResult"></InputTextDlg>
-  <InputFileDlg v-model="showInpFileDlg" mode="single" header="Upload file" @result="onFileResult"></InputFileDlg>
+  <InputTextDlg
+    v-model="showInpPasswdDlg"
+    mode="password"
+    header="Enter password for save"
+    @result="onPasswordResult"
+  />
+  <InputFileDlg
+    v-model="showInpFileDlg"
+    mode="single"
+    header="Upload file"
+    @result="onFileResult"
+  />
 </template>
 
 <script setup lang="ts">

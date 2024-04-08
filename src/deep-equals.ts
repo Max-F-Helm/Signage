@@ -67,7 +67,7 @@ export default function equal(a: any, b: any) {
             if (!Object.prototype.hasOwnProperty.call(b, keys[i])) return false;
 
         for (i = length; i-- !== 0;) {
-            let key = keys[i];
+            const key = keys[i];
 
             if (!equal(a[key], b[key])) return false;
         }

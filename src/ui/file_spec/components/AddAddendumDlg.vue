@@ -1,8 +1,13 @@
 <template>
-  <Dialog v-model:visible="open" :closable="true" :modal="true" header="Upload File">
+  <Dialog
+    v-model:visible="open"
+    :closable="true"
+    :modal="true"
+    header="Upload File"
+  >
     <div class="p-inputgroup mb-2">
       <span class="p-inputgroup-addon">
-        <i class="pi pi-book"></i>
+        <i class="pi pi-book" />
       </span>
       <InputText v-model="title" placeholder="Title"></InputText>
     </div>

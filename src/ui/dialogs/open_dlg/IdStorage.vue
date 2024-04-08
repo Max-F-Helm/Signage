@@ -1,41 +1,51 @@
 <template>
   <div>
     <div class="mb-2 ml-2">
-      <PButton icon="pi pi-replay" class="p-button-rounded p-button-outlined p-button-secondary"
-               @click="reloadEntries"></PButton>
-      <div class="flex-grow-1"></div>
+      <PButton icon="pi pi-replay" class="p-button-rounded p-button-outlined p-button-secondary" @click="reloadEntries" />
+      <div class="flex-grow-1" />
     </div>
     <div class="flex flex-column row-gap-3">
-      <DataTable :value="entries"
-                 selectionMode="single" v-model:selection="selectedEntry" :rowHover="true"
-                 :scrollable="true" scrollHeight="16rem"
-                 @row-select="onSelect">
-        <Column field="name" header="Name + Mail" :sortable="true"></Column>
+      <DataTable
+        v-model:selection="selectedEntry"
+        :value="entries"
+        selection-mode="single"
+        :row-hover="true"
+        :scrollable="true"
+        scroll-height="16rem"
+        @row-select="onSelect"
+      >
+        <Column field="name" header="Name + Mail" :sortable="true" />
         <Column field="encrypted" header="Encrypted" class="colCryptStat">
           <template #body="slotProps">
-            <div v-if="slotProps.data.encryptionKey === null" class="pi pi-lock"></div>
-            <div v-else class="pi pi-lock-open"></div>
+            <div v-if="slotProps.data.encryptionKey === null" class="pi pi-lock" />
+            <div v-else class="pi pi-lock-open" />
           </template>
         </Column>
         <Column class="colDel">
           <template #body="slotProps">
             <PButton icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
-                     @click="() => onDel(slotProps.data.name)"></PButton>
+                     @click="() => onDel(slotProps.data.name)" />
           </template>
         </Column>
       </DataTable>
 
       <div class="p-inputgroup">
         <span class="p-inputgroup-addon">
-          <i class="pi pi-lock"></i>
+          <i class="pi pi-lock" />
         </span>
-        <Password v-model="passwd" :feedback="false" placeholder="Password" ref="refPasswdInp" :disabled="!passwordRequired"
-                  @keyup.enter="onPasswdImpEnter"/>
+        <Password
+          ref="refPasswdInp"
+          v-model="passwd"
+          :feedback="false"
+          placeholder="Password"
+          :disabled="!passwordRequired"
+          @keyup.enter="onPasswdImpEnter"
+        />
       </div>
 
       <div>
-        <PButton @click="onLoad" :disabled="selectedEntry === null">Load</PButton>
-        <div class="flex-grow-1"></div>
+        <PButton :disabled="selectedEntry === null" @click="onLoad">Load</PButton>
+        <div class="flex-grow-1" />
       </div>
 
       <div v-show="errorMsg.length !== 0" class=" p-inline-message p-inline-message-error">

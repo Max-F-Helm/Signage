@@ -4,9 +4,15 @@
       Authors (excluding yourself):
       <TabView v-model:activeIndex="openTab">
         <TabPanel header="Upload Authors">
-          <FileUpload :fileLimit="32767" :multiple="true" :showCancelButton="false"
-                      :showUploadButton="false" mode="advanced"
-                      @remove="delAuthorFile" @select="addAuthorFile">
+          <FileUpload
+            :file-limit="32767"
+            :multiple="true"
+            :show-cancel-button="false"
+            :show-upload-button="false"
+            mode="advanced"
+            @remove="delAuthorFile"
+            @select="addAuthorFile"
+          >
             <template #content="{ files, uploadedFiles, removeFileCallback }">
               <div v-if="files.length > 0">
                 <div class="flex flex-wrap p-1">
@@ -29,10 +35,17 @@
                      @click="reloadStoredAuthors"></PButton>
             <div class="flex-grow-1"></div>
           </div>
-          <DataTable :value="storedAuthors" selectionMode="multiple" v-model:selection="selectedStoredAuthors"
-                     dataKey="name" :rowHover="true" :scrollable="true" scrollHeight="16rem">
-            <Column selectionMode="multiple"></Column>
-            <Column field="name" header="Name + Mail" :sortable="true"></Column>
+          <DataTable
+            v-model:selection="selectedStoredAuthors"
+            :value="storedAuthors"
+            selection-mode="multiple"
+            data-key="name"
+            :row-hover="true"
+            :scrollable="true"
+            scroll-height="16rem"
+          >
+            <Column selection-mode="multiple" />
+            <Column field="name" header="Name + Mail" :sortable="true"/>
           </DataTable>
         </TabPanel>
       </TabView>

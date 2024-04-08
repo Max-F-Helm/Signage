@@ -1,6 +1,13 @@
 <template>
-  <Dialog v-model:visible="show" :modal="true" :closeOnEscape="true" :dismissableMask="true" :closable="true" :maximizable="true"
-          header="Abut this service">
+  <Dialog
+    v-model:visible="show"
+    :modal="true"
+    :close-on-escape="true"
+    :dismissable-mask="true"
+    :closable="true"
+    :maximizable="true"
+    header="Abut this service"
+  >
     <!-- TODO -->
     <div style="max-width: 90vw;">
       Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et

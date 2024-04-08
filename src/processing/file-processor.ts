@@ -459,7 +459,7 @@ export class FileProcessor {
 
         data.writeUInt16BE(authors.length);
 
-        for(let author of authors) {
+        for(const author of authors) {
             const keyEnc = await Bill.encryptAsym(key, author.keypair);
             data.writeUint8Array(keyEnc);
         }

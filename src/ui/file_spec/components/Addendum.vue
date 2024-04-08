@@ -9,13 +9,17 @@
           <div class="col-2 p-inputgroup-addon">
             Time Stamp
           </div>
-          <div class="col p-inputgroup-addon justify-content-start">{{ formattedTimestamp }}</div>
+          <div class="col p-inputgroup-addon justify-content-start">
+            {{ formattedTimestamp }}
+          </div>
         </div>
         <div class="p-inputgroup grid mx-0 mt-1">
           <div class="col-2 p-inputgroup-addon">
             User
           </div>
-          <div class="col p-inputgroup-addon justify-content-start">{{ props.val.author.name }}</div>
+          <div class="col p-inputgroup-addon justify-content-start">
+            {{ props.val.author.name }}
+          </div>
         </div>
 
         <Panel :collapsed="true" :toggleable="true" class="mt-3">

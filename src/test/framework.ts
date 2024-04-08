@@ -15,7 +15,7 @@ export function describe(desc: string, exec: () => Promise<void>): () => Promise
             await exec();
             console.info("test successful");
         } catch (e: any) {
-            if(e.hasOwnProperty("stack")){
+            if(Object.hasOwn(e, "stack")){
                 // assertion error
                 const ex = e as AssertionError;
                 console.error(`test failed (assertion failed)\n

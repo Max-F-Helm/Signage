@@ -7,9 +7,9 @@ const tests = [
 ];
 
 export default function runTests() {
-    new Promise(async () => {
+    (async () => {
         for(const test of tests)
             await test();
         console.info("\nfin");
-    }).then();
+    })();
 }

@@ -1,5 +1,10 @@
 <template>
-  <Dialog v-model:visible="show" :closable="true" :modal="false" header="Save Changes">
+  <Dialog
+    v-model:visible="show"
+    :closable="true"
+    :modal="false"
+    header="Save Changes"
+  >
     Do you want to save the changes?
     <div class="flex flex-row mt-1">
       <PButton @click="onSavePatches" :disabled="!unsavedPatch" class="w-12rem justify-content-center">Save Patchset</PButton>

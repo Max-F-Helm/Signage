@@ -1,12 +1,28 @@
 <template>
-  <Dialog :visible="props.modelValue" @update:visible="onUpdateVisible" :modal="true" :header="props.header">
-    <div class="mb-2">{{description}}</div>
+  <Dialog
+    :visible="props.modelValue"
+    :modal="true"
+    :header="props.header"
+    @update:visible="onUpdateVisible"
+  >
+    <div class="mb-2">
+      {{ description }}
+    </div>
 
-    <InputText v-if="props.mode === 'text'" v-model="text" :placeholder="props.placeholder"></InputText>
-    <Password v-if="props.mode === 'password'" v-model="text" :placeholder="props.placeholder" :feedback="false"></Password>
+    <InputText
+      v-if="props.mode === 'text'"
+      v-model="text"
+      :placeholder="props.placeholder"
+    />
+    <Password
+      v-if="props.mode === 'password'"
+      v-model="text"
+      :placeholder="props.placeholder"
+      :feedback="false"
+    />
 
     <div class="flex flex-row w-full mt-2">
-      <div class="flex-grow-1"></div>
+      <div class="flex-grow-1" />
       <PButton @click="onSubmit">OK</PButton>
     </div>
   </Dialog>
@@ -33,7 +49,8 @@
     },
     header: {
       required: false,
-      type: String
+      type: String,
+      default: undefined
     },
     description: {
       required: false,
@@ -42,7 +59,8 @@
     },
     placeholder: {
       required: false,
-      type: String
+      type: String,
+      default: undefined
     }
   });
 

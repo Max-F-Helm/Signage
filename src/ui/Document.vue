@@ -1,14 +1,16 @@
 <template class="max-w-full max-h-full">
   <div>
-    <MenuPanel @do:showOpenDlg="showOpenDlg = true"
-               @do:showSaveDlg="showSaveDlg = true"
-               @do:showAuthorsDlg="showAuthorsDlg = true"></MenuPanel>
+    <MenuPanel
+      @do:show-open-dlg="showOpenDlg = true"
+      @do:show-save-dlg="showSaveDlg = true"
+      @do:show-authors-dlg="showAuthorsDlg = true"
+    />
 
-    <FileSpec @do:showSaveDlg="showSaveDlg = true"></FileSpec>
+    <FileSpec @do:show-save-dlg="showSaveDlg = true" />
 
-    <OpenDialog v-model="showOpenDlg"></OpenDialog>
-    <SaveChangesDlg v-model="showSaveDlg"></SaveChangesDlg>
-    <ManageAuthorsDlg v-model="showAuthorsDlg"></ManageAuthorsDlg>
+    <OpenDialog v-model="showOpenDlg" />
+    <SaveChangesDlg v-model="showSaveDlg" />
+    <ManageAuthorsDlg v-model="showAuthorsDlg" />
   </div>
 </template>
 
