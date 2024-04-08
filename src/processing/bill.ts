@@ -1,4 +1,4 @@
-import libsodium from "libsodium-wrappers";
+import libsodium from "libsodium-wrappers-sumo";
 import {IllegalArgumentException} from "@/processing/exceptions";
 
 // for this use-case hardcoded values should be fine
