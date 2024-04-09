@@ -1,10 +1,9 @@
+import type {ErrorCallback, Proposal} from "@/processing/file-processor";
 import {FileProcessor} from "@/processing/file-processor";
-import type {Proposal} from "@/processing/file-processor";
-import type {ErrorCallback} from "@/processing/file-processor";
 import type {Identity} from "@/processing/identity-processor";
 import {IllegalStateException} from "@/processing/exceptions";
 import type Author from "@/processing/model/Author";
-import type BufferReader from "@/processing/buffer-reader";
+import BufferReader from "@/processing/buffer-reader";
 import type {Buffer} from "buffer";
 import {ref} from "vue";
 
@@ -18,6 +17,7 @@ export default class FileProcessorWrapper {
     private identity: Identity | null = null;
     private readonly listeners: Listener[] = [];
     private readonly errListeners: ErrorCallback[] = [];
+    private readonly toBeLoadedPatches: Buffer[] = [];
 
     /**
      * the name of the Proposal with which it is stored in BrowserStorage
@@ -43,6 +43,18 @@ export default class FileProcessorWrapper {
         const idx = this.errListeners.indexOf(listener);
         if(idx !== -1)
             this.errListeners.slice(idx, 1);
+    }
+
+    addToBeLoadedPatch(data: Buffer) {
+        this.toBeLoadedPatches.push(data);
+    }
+
+    getToBeLoadedPatches(): Buffer[] {
+        return this.toBeLoadedPatches;
+    }
+
+    clearToBeLoadedPatches() {
+        this.toBeLoadedPatches.splice(0);
     }
 
     setIdentity(identity: Identity) {
@@ -85,6 +97,8 @@ export default class FileProcessorWrapper {
             throw new IllegalStateException("not initialized");
 
         await this.fileProcessor.loadFile(data);
+        await this.importPendingPatches();
+
         this.onUpdated();
     }
 
@@ -138,6 +152,12 @@ export default class FileProcessorWrapper {
             throw new IllegalStateException("not initialized");
 
         return this.fileProcessor.getChangesCount();
+    }
+
+    private async importPendingPatches() {
+        for(const patch of this.toBeLoadedPatches) {
+            await this.fileProcessor!.importPatchSet(new BufferReader(patch));
+        }
     }
 
     private onErr(msg: string) {
