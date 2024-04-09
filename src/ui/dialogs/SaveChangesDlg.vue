@@ -9,12 +9,17 @@
     <div class="flex flex-row mt-1">
       <PButton @click="onSavePatches" :disabled="!unsavedPatch" class="w-12rem justify-content-center">Save Patchset</PButton>
       <div class="flex-grow-1 mx-1"></div>
+      <PButton @click="onMailPatches" :disabled="!unsavedPatch" class="w-12rem justify-content-center">Mail Patchset</PButton>
+    </div>
+    <div class="flex flex-row mt-1">
       <PButton @click="onSaveProposal" class="w-12rem justify-content-center">Save Proposal</PButton>
       <template v-if="fileProcessor.storageName !== null">
         <div class="flex-grow-1 mx-1"></div>
         <PButton @click="onSaveProposalToStorage" class="w-12rem justify-content-center">Update in Storage</PButton>
       </template>
     </div>
+
+    <MailPatchSetDlg v-model="showMailDlg"></MailPatchSetDlg>
   </Dialog>
 </template>
 
@@ -26,6 +31,7 @@
   import {download} from "@/ui/utils/utils";
   import {useToast} from "primevue/usetoast";
   import BrowserStorage from "@/BrowserStorage";
+  import MailPatchSetDlg from "@/ui/dialogs/MailPatchSetDlg.vue";
 
   const props = defineProps({
     modelValue: {
@@ -41,6 +47,7 @@
 
   const patchExported = ref<boolean>(false);
   const unsavedPatch = ref(false);
+  const showMailDlg = ref(false);
 
   const show = computed({
     get() {
@@ -107,9 +114,13 @@
 
       patchExported.value = true;
     } catch (e) {
-      console.error("unable to save proposal: saveFile failed", e);
-      showErrToast("Error while saving file", e);
+      console.error("unable to save PatchSet: exportChanges() failed", e);
+      showErrToast("Error while saving patches", e);
     }
+  }
+
+  function onMailPatches() {
+    showMailDlg.value = true;
   }
 
   function showErrToast(summary: string, e: any) {
